@@ -34,14 +34,14 @@ export function DemandScore({
         Greenwich Avenue · {localDateLabel}
       </div>
 
-      <div className="display italic font-normal leading-[1.05] tracking-tight"
+      <h1 className="display italic font-normal leading-[1.05] tracking-tight"
         style={{
           color: accent,
           fontSize: "clamp(40px, 7vw, 56px)",
         }}
       >
         {verdict}
-      </div>
+      </h1>
 
       <div className="mono text-[14px] text-[var(--muted)] tracking-tight">
         {score} / 100
