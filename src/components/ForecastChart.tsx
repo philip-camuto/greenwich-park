@@ -65,15 +65,15 @@ export function ForecastChart({ points, bestTime }: Props) {
         y1={M.t + innerH}
         x2={W - M.r}
         y2={M.t + innerH}
-        stroke="var(--hairline)"
+        stroke="var(--separator)"
         strokeWidth="1"
       />
 
       {/* curve */}
-      <path d={path()} fill="none" stroke="var(--fg)" strokeWidth="1" />
+      <path d={path()} fill="none" stroke="var(--label-primary)" strokeWidth="1" />
 
       {/* current-moment filled dot */}
-      <circle cx={xAt(0)} cy={yAt(points[0].score)} r="3" fill="var(--fg)" />
+      <circle cx={xAt(0)} cy={yAt(points[0].score)} r="3" fill="var(--label-primary)" />
 
       {/* best-time outline dot */}
       {bestIdx > 0 && (
@@ -81,8 +81,8 @@ export function ForecastChart({ points, bestTime }: Props) {
           cx={xAt(bestIdx)}
           cy={yAt(points[bestIdx].score)}
           r="4"
-          fill="var(--bg)"
-          stroke="var(--fg)"
+          fill="var(--bg-surface)"
+          stroke="var(--label-primary)"
           strokeWidth="1"
         />
       )}
@@ -93,7 +93,7 @@ export function ForecastChart({ points, bestTime }: Props) {
           key={label}
           x={xAt(i)}
           y={H - 6}
-          fill="var(--muted)"
+          fill="var(--label-secondary)"
           fontSize="10"
           fontFamily="var(--font-mono), monospace"
           letterSpacing="0.15em"

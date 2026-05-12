@@ -56,7 +56,7 @@ function buildUrl(extraHourly = false): string {
   });
   if (extraHourly) {
     params.set("hourly", "temperature_2m,precipitation,weather_code");
-    params.set("forecast_days", "2");
+    params.set("forecast_days", "7");
   }
   return `${BASE}?${params.toString()}`;
 }
