@@ -10,16 +10,14 @@ export default function Icon() {
         style={{
           width: "100%",
           height: "100%",
-          background: "#FAFAF8",
-          color: "#111111",
+          background: "#F2F2F7",
+          color: "#000000",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontFamily: "serif",
-          fontStyle: "italic",
-          fontSize: 26,
-          fontWeight: 400,
-          letterSpacing: -1,
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          fontSize: 22,
+          fontWeight: 700,
           lineHeight: 1,
         }}
       >
