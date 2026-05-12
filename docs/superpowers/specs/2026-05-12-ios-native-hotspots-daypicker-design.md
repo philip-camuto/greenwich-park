@@ -10,7 +10,7 @@
 Three pieces of user direction:
 
 1. **"More like a Google/Apple native vibe."** Pivot away from the Spectral italic editorial register to iOS native — SF Pro Display/Text/Mono, grouped-inset cards, segmented controls, system colors.
-2. **"I want to see different parts of the Ave."** Surface the four hotspots — Ginger Man, Terra, Moli, Hinoki — as their own surface, with the implication that per-block demand is meaningful (even if Phase 1 data doesn't truly support that yet — see "Per-block resolution" below).
+2. **"I want to see different parts of the Ave."** Surface the four hotspots — Ginger Man, Terra, Rag & Bone, Hinoki — as their own surface, with the implication that per-block demand is meaningful (even if Phase 1 data doesn't truly support that yet — see "Per-block resolution" below).
 3. **"Day picker for tomorrow."** Let users see the demand forecast for tomorrow (and up to ~7 days out), not just the next 4 hours from now.
 
 The data layer (heuristic, sources, db, ingest, forecast pipeline) is untouched except for one extension: `buildForecastForGreenwich` accepts a target date.
