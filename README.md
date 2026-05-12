@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Greenwich Park
 
-## Getting Started
+Shows you when Greenwich Avenue is busy before you drive there.
 
-First, run the development server:
+Phase 1 = demand predictor from public signals (CT Travel Smart traffic + OpenWeather + time-of-day priors). No ground truth yet. Phase 2 backfills historical data and trains a real model. Phase 3 ingests FOIA citation data. Phase 4 adds live camera occupancy from a Raspberry Pi pilot.
+
+## Stack
+
+- Next.js 16 (App Router, Turbopack)
+- TypeScript, Tailwind 4
+- Drizzle ORM + Neon Postgres (via Vercel Marketplace)
+- Deployed on Vercel
+- On-demand ingestion with 15-min runtime cache (no Vercel Cron required on Hobby)
+
+## Local dev
 
 ```bash
+cp .env.example .env.local   # fill in keys
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Var | Where to get it |
+| --- | --- |
+| `CT_TRAVEL_SMART_API_KEY` | CTDOT developer portal |
+| `OPENWEATHER_API_KEY` | https://openweathermap.org/api (One Call 3.0) |
+| `DATABASE_URL` | Auto-provisioned by Neon integration on Vercel. Pull with `vercel env pull .env.local` |
+| `CRON_SECRET` | Optional. Bearer required on `/api/cron/ingest` when set. |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project layout
 
-## Learn More
+```
+src/
+  app/
+    page.tsx                       main screen (Step 7)
+    api/cron/ingest/route.ts       on-demand + future cron entrypoint
+    api/demand/current/route.ts    latest demand score
+    api/demand/forecast/route.ts   4-hour projection
+  lib/
+    sources/
+      ctTravelSmart.ts             I-95 traffic near Greenwich exits
+      openWeather.ts               current + hourly forecast
+      timeFeatures.ts              hour/dow/weekend/holiday
+      citations.ts                 Phase 3 FOIA stub
+      parkMobile.ts                Phase 3 partnership stub
+      cameraFeed.ts                Phase 4 Pi/YOLO stub
+    model/
+      heuristic.ts                 Phase 1 scoring function
+      priors.ts                    hardcoded demand-by-hour-and-dow
+      types.ts
+    db/
+      schema.ts                    observations table
+      client.ts                    Drizzle + Neon HTTP driver
+    utils/time.ts
+  components/
+    DemandScore.tsx
+    ForecastChart.tsx
+    BestTimeCallout.tsx
+    Settings.tsx
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Phase map
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Phase | Status | What plugs in where |
+| --- | --- | --- |
+| 1 | this build | public signals + heuristic |
+| 2 | next | historical backfill + trained model replaces `heuristic.ts` |
+| 3 | future | `citations.ts` + `parkMobile.ts` feed the model |
+| 4 | future | `cameraFeed.ts` ground truth replaces priors |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Honest framing
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+No ground-truth occupancy data exists yet. Phase 1 is a demand *indicator*, not a parking finder.
