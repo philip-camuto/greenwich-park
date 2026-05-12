@@ -3,9 +3,6 @@ import { ImageResponse } from "next/og";
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
-// iOS home-screen icon (180x180 per Apple spec). Same Spectral P + a small
-// Greenwich coordinate mark in mono caps — instrument vibe carries into the
-// home screen icon.
 export default function AppleIcon() {
   return new ImageResponse(
     (
@@ -13,8 +10,8 @@ export default function AppleIcon() {
         style={{
           width: "100%",
           height: "100%",
-          background: "#000000",
-          color: "#f4f4f4",
+          background: "#FAFAF8",
+          color: "#111111",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -27,6 +24,7 @@ export default function AppleIcon() {
           style={{
             fontSize: 150,
             fontWeight: 300,
+            fontStyle: "italic",
             letterSpacing: -6,
             lineHeight: 1,
             marginTop: -8,
@@ -40,12 +38,12 @@ export default function AppleIcon() {
             bottom: 14,
             fontSize: 10,
             letterSpacing: 2.5,
-            color: "#8a8a8a",
+            color: "#6B6B6B",
             fontFamily: "monospace",
             textTransform: "uppercase",
           }}
         >
-          41.026°N
+          Greenwich Ave
         </div>
       </div>
     ),
