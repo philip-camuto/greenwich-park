@@ -29,6 +29,18 @@ export type AvenueBlock = {
   northNodeId: string;
   southNodeId: string;
   label: string; // human-readable, used in tooltip
+  offset: number;
+};
+
+// Hand-tuned per-block offsets (Phase 1.5). Calibration guesses based on
+// common Greenwich Ave observation — Phase 3 FOIA data replaces these.
+const OFFSET_BY_BLOCK_INDEX: Record<number, number> = {
+  0: 3,  // Lafayette/Putnam → Elm
+  1: 2,  // Elm → Lewis
+  2: 0,  // Lewis → Mason
+  3: -2, // Mason → Havemeyer
+  4: 1,  // Havemeyer → Arch
+  5: -3, // Arch → Steamboat
 };
 
 export const BLOCKS: AvenueBlock[] = NODES.slice(0, -1).map((n, i) => {
@@ -38,5 +50,6 @@ export const BLOCKS: AvenueBlock[] = NODES.slice(0, -1).map((n, i) => {
     northNodeId: n.id,
     southNodeId: south.id,
     label: `Between ${n.label} and ${south.label}`,
+    offset: OFFSET_BY_BLOCK_INDEX[i] ?? 0,
   };
 });
