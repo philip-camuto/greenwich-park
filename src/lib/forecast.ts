@@ -139,14 +139,14 @@ export function buildForecast({
 }
 
 // Async convenience: fetches sources + runs buildForecast.
-export async function buildForecastForGreenwich(now: Date = new Date()): Promise<Forecast> {
+export async function buildForecastForGreenwich(
+  startAt: Date = new Date(),
+): Promise<Forecast> {
   const [traffic, hourly] = await Promise.all([
     fetchGreenwichTraffic(),
     fetchGreenwichHourlyForecast(),
   ]);
-  // Derive current weather from the hourly forecast slot at "now" rather than
-  // making a third API call. If hourly is empty, fall back to a real fetch.
-  const currentSlot = hourly.find((h) => h.timestamp === localHourKey(now));
+  const currentSlot = hourly.find((h) => h.timestamp === localHourKey(startAt));
   const currentWeather: WeatherSnapshot = currentSlot
     ? {
         tempF: currentSlot.tempF,
@@ -166,7 +166,18 @@ export async function buildForecastForGreenwich(now: Date = new Date()): Promise
         fetchedAt: new Date().toISOString(),
         ok: false,
       };
-  return buildForecast({ now, currentWeather, traffic, hourly });
+  // Future-day traffic snapshot is meaningless (we have no traffic forecast).
+  // Mark it ok:false so the heuristic drops confidence accordingly.
+  const isFuture = startAt.getTime() - Date.now() > 60 * 60 * 1000;
+  const trafficForDay: TrafficSnapshot = isFuture
+    ? { ...traffic, ok: false }
+    : traffic;
+  return buildForecast({
+    now: startAt,
+    currentWeather,
+    traffic: trafficForDay,
+    hourly,
+  });
 }
 
 export const __test__ = { localHourKey };

@@ -137,3 +137,25 @@ describe("buildForecast", () => {
     }
   });
 });
+
+describe("buildForecast (future startAt)", () => {
+  const futureStart = new Date("2026-05-14T12:00:00Z"); // Thu 8am ET
+  const hourly: HourlyForecastPoint[] = [
+    { timestamp: "2026-05-14T08:00", tempF: 70, condition: "clear", precipitationIn: 0 },
+    { timestamp: "2026-05-14T09:00", tempF: 72, condition: "clear", precipitationIn: 0 },
+    { timestamp: "2026-05-14T10:00", tempF: 74, condition: "clear", precipitationIn: 0 },
+    { timestamp: "2026-05-14T11:00", tempF: 75, condition: "clear", precipitationIn: 0 },
+    { timestamp: "2026-05-14T12:00", tempF: 76, condition: "clear", precipitationIn: 0 },
+  ];
+
+  it("starts the first point at the supplied startAt", () => {
+    const f = buildForecast({ now: futureStart, currentWeather: w(), traffic: tr(), hourly });
+    expect(f.points[0].timestamp).toBe(futureStart.toISOString());
+  });
+  it("walks 15 minutes per step", () => {
+    const f = buildForecast({ now: futureStart, currentWeather: w(), traffic: tr(), hourly });
+    const delta =
+      new Date(f.points[1].timestamp).getTime() - new Date(f.points[0].timestamp).getTime();
+    expect(delta).toBe(15 * 60 * 1000);
+  });
+});
