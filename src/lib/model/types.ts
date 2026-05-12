@@ -37,11 +37,23 @@ export type TrafficSnapshot = {
   fetchedAt: string;
 };
 
+export type HolidayKind = "closure" | "retail-spike" | "observed" | "none";
+
 export type TimeFeatures = {
-  hour: number;
-  dayOfWeek: number;
+  hour: number; // 0-23, America/New_York local
+  dayOfWeek: number; // 0=Sun..6=Sat, America/New_York local
   isWeekend: boolean;
   isHoliday: boolean;
+  holidayKind: HolidayKind;
+  holidayName: string | null;
+  isSchoolInSession: boolean;
+  localDate: string; // YYYY-MM-DD in America/New_York
+};
+
+export type SpecialEvent = {
+  date: string; // YYYY-MM-DD
+  name: string;
+  demandBoost: number; // +/- adjustment to score
 };
 
 export type ModelInput = {
