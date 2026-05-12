@@ -1,0 +1,39 @@
+import { describe, expect, it } from "vitest";
+import { parseDayParam } from "./day-param";
+
+describe("parseDayParam", () => {
+  it("returns today when missing", () => {
+    const out = parseDayParam(undefined, new Date("2026-05-12T20:00:00Z"));
+    expect(out.kind).toBe("today");
+  });
+  it("returns today when explicitly 'today'", () => {
+    const out = parseDayParam("today", new Date("2026-05-12T20:00:00Z"));
+    expect(out.kind).toBe("today");
+  });
+  it("returns tomorrow at 8am Greenwich-local when 'tomorrow'", () => {
+    const out = parseDayParam("tomorrow", new Date("2026-05-12T20:00:00Z"));
+    expect(out.kind).toBe("future");
+    if (out.kind === "future") {
+      expect(out.startAt.toISOString()).toBe("2026-05-13T12:00:00.000Z");
+    }
+  });
+  it("accepts ISO date string for future days", () => {
+    const out = parseDayParam("2026-05-15", new Date("2026-05-12T20:00:00Z"));
+    expect(out.kind).toBe("future");
+    if (out.kind === "future") {
+      expect(out.startAt.toISOString()).toBe("2026-05-15T12:00:00.000Z");
+    }
+  });
+  it("rejects past dates → falls back to today", () => {
+    const out = parseDayParam("2026-05-10", new Date("2026-05-12T20:00:00Z"));
+    expect(out.kind).toBe("today");
+  });
+  it("rejects > 7 days out → falls back to today", () => {
+    const out = parseDayParam("2026-06-01", new Date("2026-05-12T20:00:00Z"));
+    expect(out.kind).toBe("today");
+  });
+  it("rejects malformed → falls back to today", () => {
+    const out = parseDayParam("garbage", new Date("2026-05-12T20:00:00Z"));
+    expect(out.kind).toBe("today");
+  });
+});
