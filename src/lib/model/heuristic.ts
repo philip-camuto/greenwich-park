@@ -29,26 +29,30 @@ import { getPrior } from "./priors";
 
 export function weatherModifier(weather: WeatherSnapshot): number {
   if (!weather.ok || weather.condition === "unknown") return 0;
+  let mod = 0;
   switch (weather.condition) {
     case "snow":
-      return -40;
+      mod -= 40;
+      break;
     case "thunderstorm":
-      return -30;
+      mod -= 30;
+      break;
     case "rain":
-      return -20;
+      mod -= 20;
+      break;
     case "fog":
-      return -5;
+      mod -= 5;
+      break;
     case "clear":
-    case "cloudy": {
-      let mod = 0;
+    case "cloudy":
       if (weather.isDay && weather.tempF >= 80) mod += 10;
       else if (weather.isDay && weather.tempF >= 65) mod += 5;
-      if (weather.tempF < 32) mod -= 10;
-      return mod;
-    }
-    default:
-      return 0;
+      break;
   }
+  // Freezing temperature compounds regardless of condition. Bitterly cold
+  // snow is worse than 33F slush; freezing rain worse than warm rain.
+  if (weather.tempF < 32) mod -= 10;
+  return mod;
 }
 
 export function trafficModifier(traffic: TrafficSnapshot): number {

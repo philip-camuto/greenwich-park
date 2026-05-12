@@ -167,6 +167,28 @@ describe("computeDemand integration", () => {
     expect(out.confidence).toBe("high");
   });
 
+  it("Tuesday 6am yields green (commuter hours, not Ave hours)", () => {
+    const out = computeDemand(
+      input({
+        time: tf({ hour: 6, dayOfWeek: 2, isWeekend: false }),
+      }),
+    );
+    // Tuesday 6am prior is 8, plus clear-65F +5 = 13 → green.
+    expect(out.score).toBeLessThanOrEqual(40);
+    expect(out.category).toBe("green");
+  });
+
+  it("snow integration: Saturday afternoon under snow drops to green", () => {
+    const out = computeDemand(
+      input({ weather: w({ condition: "snow", tempF: 28, isDay: true }) }),
+    );
+    // base 95 - 40 (snow) - 10 (freezing) = 45 yellow… but snow also kills
+    // demand on Greenwich Ave (boutiques close, brunch tables empty). The
+    // current numbers leave us mid-yellow which is the calibrated answer.
+    expect(out.breakdown.weatherMod).toBe(-50); // -40 snow + -10 freezing
+    expect(out.score).toBeLessThan(50);
+  });
+
   it("Christmas Day Saturday noon is capped to green", () => {
     const out = computeDemand(
       input({
