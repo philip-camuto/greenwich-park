@@ -1,17 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  /* Cockpit palette. Always dark — car-friendly readability is non-negotiable. */
-  --bg: #000000;
-  --fg: #f4f4f4;
-  --muted: #8a8a8a;
-  --hairline: #2a2a2a;
+  /* Light editorial palette. Off-white canvas, not stark white. */
+  --bg: #fafaf8;
+  --fg: #111111;
+  --muted: #6b6b6b;
+  --hairline: #e5e5e5;
 
-  /* State accents — calibrated to read instantly without feeling like a
-     warning panel. No preppy green, no panic red. */
-  --green: #4ade80;
-  --amber: #fbbf24;
-  --red: #fb7185;
+  /* Map */
+  --map-line: #1f1f1f;
+  --map-fill-quiet: #d9eae0;
+  --map-fill-busy: #f2e2c9;
+  --map-fill-tough: #f0d2d2;
+
+  /* Verdict accents — dark on white reads elegant. */
+  --accent-quiet: #1a5d40;
+  --accent-busy: #8c5a2a;
+  --accent-tough: #9b2c2c;
 }
 
 @theme inline {
@@ -19,9 +24,13 @@
   --color-fg: var(--fg);
   --color-muted: var(--muted);
   --color-hairline: var(--hairline);
-  --color-green: var(--green);
-  --color-amber: var(--amber);
-  --color-red: var(--red);
+  --color-map-line: var(--map-line);
+  --color-map-fill-quiet: var(--map-fill-quiet);
+  --color-map-fill-busy: var(--map-fill-busy);
+  --color-map-fill-tough: var(--map-fill-tough);
+  --color-accent-quiet: var(--accent-quiet);
+  --color-accent-busy: var(--accent-busy);
+  --color-accent-tough: var(--accent-tough);
   --font-display: var(--font-display);
   --font-mono: var(--font-mono);
 }
@@ -30,8 +39,6 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
-  /* Number-styling defaults: tabular figures so the digit position never
-     dances when the score ticks from 99→100. */
   font-feature-settings: "tnum" 1, "lnum" 1;
 }
 
