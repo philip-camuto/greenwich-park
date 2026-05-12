@@ -20,14 +20,21 @@ npm install
 npm run dev
 ```
 
+## Tests
+
+```bash
+npm run test
+```
+
 ## Environment variables
 
 | Var | Where to get it |
 | --- | --- |
-| `CT_TRAVEL_SMART_API_KEY` | CTDOT developer portal |
-| `OPENWEATHER_API_KEY` | https://openweathermap.org/api (One Call 3.0) |
-| `DATABASE_URL` | Auto-provisioned by Neon integration on Vercel. Pull with `vercel env pull .env.local` |
+| `CT_TRAVEL_SMART_API_KEY` | CTDOT developer portal. Rate limit 10/60s. |
+| `DATABASE_URL` | Auto-provisioned by Neon integration on Vercel. Pull with `vercel env pull .env.local`. |
 | `CRON_SECRET` | Optional. Bearer required on `/api/cron/ingest` when set. |
+
+Weather uses **Open-Meteo** (https://open-meteo.com) which needs no key. If you ever want to swap providers, the seam is `src/lib/sources/openWeather.ts`.
 
 ## Project layout
 
@@ -40,8 +47,8 @@ src/
     api/demand/forecast/route.ts   4-hour projection
   lib/
     sources/
-      ctTravelSmart.ts             I-95 traffic near Greenwich exits
-      openWeather.ts               current + hourly forecast
+      ctTravelSmart.ts             I-95 events near Greenwich exits (CTDOT 511)
+      openWeather.ts               Open-Meteo current + hourly forecast
       timeFeatures.ts              hour/dow/weekend/holiday
       citations.ts                 Phase 3 FOIA stub
       parkMobile.ts                Phase 3 partnership stub

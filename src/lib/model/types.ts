@@ -7,15 +7,34 @@ export type DemandScore = {
   confidence: Confidence;
 };
 
+export type WeatherCondition =
+  | "clear"
+  | "cloudy"
+  | "rain"
+  | "snow"
+  | "thunderstorm"
+  | "fog"
+  | "unknown";
+
 export type WeatherSnapshot = {
-  temp: number;
-  condition: string;
-  precipitation: number;
+  tempF: number;
+  condition: WeatherCondition;
+  precipitationIn: number;
+  windMph: number;
+  isDay: boolean;
+  fetchedAt: string;
 };
 
+export type TrafficSeverity = "none" | "light" | "moderate" | "heavy";
+
 export type TrafficSnapshot = {
-  i95SpeedNb: number | null;
-  i95SpeedSb: number | null;
+  severity: TrafficSeverity;
+  greenwichRelevantEvents: number;
+  i95EventsTotal: number;
+  northboundAffected: boolean;
+  southboundAffected: boolean;
+  closureNearby: boolean;
+  fetchedAt: string;
 };
 
 export type TimeFeatures = {
