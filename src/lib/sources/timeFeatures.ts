@@ -1,5 +1,6 @@
 import type {
   HolidayKind,
+  SchoolStatus,
   SpecialEvent,
   TimeFeatures,
 } from "@/lib/model/types";
@@ -112,26 +113,53 @@ function classifyHoliday(p: LocalParts): HolidayHit | null {
 
 // Greenwich Public Schools calendar. Approximated — Phase 2 model learns
 // from actual observations and corrects whatever this gets wrong.
-function isSchoolInSession(p: LocalParts): boolean {
+function isPublicInSession(p: LocalParts): boolean {
   const { month, day, weekday } = p;
-  if (weekday === 0 || weekday === 6) return false; // weekend
+  if (weekday === 0 || weekday === 6) return false;
   if (month === 7 || month === 8) return false; // summer
-  // Winter break: ~Dec 22 - Jan 2.
-  if (month === 12 && day >= 22) return false;
-  if (month === 1 && day <= 2) return false;
-  // February break: third week (Presidents' Day week-ish).
-  if (month === 2 && day >= 16 && day <= 22) return false;
-  // April break: ~third week.
-  if (month === 4 && day >= 13 && day <= 19) return false;
-  // Edge weeks: school typically starts after Labor Day, ends mid-late June.
-  if (month === 6 && day > 16) return false;
-  if (month === 9 && day < 4) return false;
+  if (month === 12 && day >= 22) return false; // winter break starts
+  if (month === 1 && day <= 2) return false; // winter break ends
+  if (month === 2 && day >= 16 && day <= 20) return false; // Feb break
+  if (month === 4 && day >= 13 && day <= 17) return false; // April spring break
+  if (month === 6 && day > 16) return false; // end of year
+  if (month === 9 && day < 4) return false; // starts after Labor Day
   return true;
+}
+
+// Private K-12 schools in Greenwich: Brunswick, Greenwich Country Day,
+// Greenwich Academy, Sacred Heart, Whitby. Their calendars are remarkably
+// aligned with each other and differ from GPS in three known ways:
+//   - winter break runs longer (~Dec 18 to early Jan)
+//   - long spring break in early/mid March (no Feb break of note)
+//   - school year wraps in late May, ~3 weeks earlier than GPS
+function isPrivateInSession(p: LocalParts): boolean {
+  const { month, day, weekday } = p;
+  if (weekday === 0 || weekday === 6) return false;
+  if (month === 6 || month === 7 || month === 8) return false; // summer (private out all June)
+  if (month === 5 && day >= 29) return false; // private school year ends ~May 28
+  if (month === 9 && day < 8) return false; // private start ~week after Labor Day
+  if (month === 12 && day >= 18) return false; // longer winter break
+  if (month === 1 && day <= 5) return false;
+  if (month === 3 && day >= 9 && day <= 22) return false; // 2-week spring break
+  // No Feb break for private schools (Presidents' Day Monday is the only day off).
+  return true;
+}
+
+function computeSchoolStatus(p: LocalParts): SchoolStatus {
+  const publicInSession = isPublicInSession(p);
+  const privateInSession = isPrivateInSession(p);
+  return {
+    publicInSession,
+    privateInSession,
+    anyInSession: publicInSession || privateInSession,
+    allInSession: publicInSession && privateInSession,
+  };
 }
 
 export function computeTimeFeatures(at: Date = new Date()): TimeFeatures {
   const p = localParts(at);
   const hit = classifyHoliday(p);
+  const schoolStatus = computeSchoolStatus(p);
   return {
     hour: p.hour,
     dayOfWeek: p.weekday,
@@ -139,7 +167,8 @@ export function computeTimeFeatures(at: Date = new Date()): TimeFeatures {
     isHoliday: hit !== null,
     holidayKind: hit?.kind ?? "none",
     holidayName: hit?.name ?? null,
-    isSchoolInSession: isSchoolInSession(p),
+    schoolStatus,
+    isSchoolInSession: schoolStatus.allInSession,
     localDate: p.isoDate,
   };
 }
@@ -160,5 +189,7 @@ export const __test__ = {
   nthWeekday,
   lastWeekday,
   classifyHoliday,
-  isSchoolInSession,
+  isPublicInSession,
+  isPrivateInSession,
+  computeSchoolStatus,
 };

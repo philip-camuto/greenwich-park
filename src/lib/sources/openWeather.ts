@@ -72,25 +72,35 @@ async function fetchOpenMeteo(extraHourly: boolean): Promise<OpenMeteoResponse> 
 }
 
 export async function fetchGreenwichWeather(): Promise<WeatherSnapshot> {
-  const data = await fetchOpenMeteo(false);
-  const c = data.current;
-  if (!c) {
+  try {
+    const data = await fetchOpenMeteo(false);
+    const c = data.current;
+    if (!c) {
+      return emptyWeather();
+    }
     return {
-      tempF: 0,
-      condition: "unknown",
-      precipitationIn: 0,
-      windMph: 0,
-      isDay: true,
+      tempF: c.temperature_2m,
+      condition: codeToCondition(c.weather_code),
+      precipitationIn: c.precipitation,
+      windMph: c.wind_speed_10m,
+      isDay: c.is_day === 1,
       fetchedAt: new Date().toISOString(),
+      ok: true,
     };
+  } catch {
+    return emptyWeather();
   }
+}
+
+function emptyWeather(): WeatherSnapshot {
   return {
-    tempF: c.temperature_2m,
-    condition: codeToCondition(c.weather_code),
-    precipitationIn: c.precipitation,
-    windMph: c.wind_speed_10m,
-    isDay: c.is_day === 1,
+    tempF: 0,
+    condition: "unknown",
+    precipitationIn: 0,
+    windMph: 0,
+    isDay: true,
     fetchedAt: new Date().toISOString(),
+    ok: false,
   };
 }
 

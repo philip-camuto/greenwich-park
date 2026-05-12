@@ -79,12 +79,14 @@ describe("fetchGreenwichWeather", () => {
     expect(w.windMph).toBe(5.7);
   });
 
-  it("throws on non-2xx", async () => {
+  it("returns ok:false snapshot on non-2xx (graceful degradation)", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => new Response("upstream", { status: 503 })),
     );
-    await expect(fetchGreenwichWeather()).rejects.toThrow(/503/);
+    const w = await fetchGreenwichWeather();
+    expect(w.ok).toBe(false);
+    expect(w.condition).toBe("unknown");
   });
 });
 

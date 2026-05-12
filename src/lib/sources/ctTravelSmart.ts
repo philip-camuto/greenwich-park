@@ -66,15 +66,24 @@ export function exitRangeOverlapsGreenwich(description: string | null | undefine
 export function isGreenwichRelevant(event: CTEvent): boolean {
   if (event.RoadwayName !== "I-95") return false;
 
-  // Lat/lng within radius of Greenwich Ave area.
+  // Authoritative test: parse the exit range from the description if present.
+  // The event lat/lng is just where the queue *starts*; for long queues that
+  // start at Greenwich-adjacent exits (e.g. Westport Exit 7 = 4.7mi from us)
+  // the geographic proxy will say "near" even though the actual congestion is
+  // entirely north of Greenwich. So when an exit range is given, trust it
+  // and skip the radius fallback.
+  const desc = event.Description ?? "";
+  const hasExitRange = /between\s+Exits?\s+\d+\s+and\s+\d+/i.test(desc);
+  if (hasExitRange) {
+    return exitRangeOverlapsGreenwich(desc);
+  }
+
+  // No exit range (incident, closure, weather event, etc) — fall back to a
+  // geographic proxy: is the event geographically inside Greenwich-ish.
   if (typeof event.Latitude === "number" && typeof event.Longitude === "number") {
     const d = haversineMiles(event.Latitude, event.Longitude, GREENWICH_LAT, GREENWICH_LON);
     if (d <= GREENWICH_RADIUS_MI) return true;
   }
-
-  // Or: an exit-range queue spanning Greenwich exits.
-  if (exitRangeOverlapsGreenwich(event.Description)) return true;
-
   return false;
 }
 
@@ -120,6 +129,7 @@ export function summarize(events: CTEvent[]): TrafficSnapshot {
     southboundAffected: sb,
     closureNearby,
     fetchedAt: new Date().toISOString(),
+    ok: true,
   };
 }
 
@@ -132,5 +142,6 @@ function emptySnapshot(): TrafficSnapshot {
     southboundAffected: false,
     closureNearby: false,
     fetchedAt: new Date().toISOString(),
+    ok: false,
   };
 }
