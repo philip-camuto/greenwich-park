@@ -18,6 +18,9 @@ describe("formatGreenwichTime", () => {
     // 2026-05-12 21:00 UTC == 2026-05-12 17:00 ET (EDT)
     expect(formatGreenwichTime("2026-05-12T21:00:00Z")).toBe("5:00 PM");
   });
+  it("accepts Date input as well as string", () => {
+    expect(formatGreenwichTime(new Date("2026-05-12T21:00:00Z"))).toBe("5:00 PM");
+  });
 });
 
 describe("actionCopyFor", () => {
@@ -49,5 +52,13 @@ describe("actionCopyFor", () => {
         bestTime: { timestamp: "2026-05-12T01:00:00Z", score: 47 },
       }),
     ).toMatch(/Won't get much easier/i);
+  });
+  it("gap === 20 (boundary, inclusive at 20) → 'Should ease up by X'", () => {
+    expect(
+      actionCopyFor({
+        currentScore: 70,
+        bestTime: { timestamp: "2026-05-12T01:00:00Z", score: 50 },
+      }),
+    ).toMatch(/^Should ease up by /);
   });
 });
