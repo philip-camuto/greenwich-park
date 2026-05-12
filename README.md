@@ -121,6 +121,27 @@ src/
     Settings.tsx                   stub (Phase 1 has no settings)
 ```
 
+## Parking inventory
+
+A static inventory of downtown Greenwich parking zones lives at
+`src/lib/inventory/data.ts`. It defines 12 zones split into three types:
+
+| Type | Zones | Estimated spaces |
+| --- | --- | --- |
+| On-Ave street parking | 6 | ~231 |
+| Side streets feeding the Ave | 1 | ~55 |
+| Off-Ave rear lots | 5 | ~443 |
+| **Total downtown** | **12** | **~729** |
+
+Numbers are derived from satellite imagery on 2026-05-12 and are **estimates pending FOIA verification** with Greenwich Parking Services. They are not measured.
+
+When Greenwich Parking Services confirms counts (or once camera/citation
+data is in hand), update `PARKING_ZONES[].estimatedSpaces` directly and bump
+`INVENTORY_SOURCE_DATE` in `src/lib/inventory/data.ts`.
+
+The `observations_by_zone` table in `src/lib/db/schema.ts` is prepared to
+receive per-zone occupancy data in Phase 3. It is empty in Phase 1.
+
 ## Phase map
 
 | Phase | Status | What plugs in where |
