@@ -10,36 +10,24 @@ export default function AppleIcon() {
         style={{
           width: "100%",
           height: "100%",
-          background: "#FAFAF8",
-          color: "#111111",
+          background: "#F2F2F7",
+          color: "#000000",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          fontFamily: "serif",
+          fontFamily: "system-ui, -apple-system, sans-serif",
           position: "relative",
         }}
       >
-        <div
-          style={{
-            fontSize: 150,
-            fontWeight: 300,
-            fontStyle: "italic",
-            letterSpacing: -6,
-            lineHeight: 1,
-            marginTop: -8,
-          }}
-        >
-          P
-        </div>
+        <div style={{ fontSize: 130, fontWeight: 700, lineHeight: 1 }}>P</div>
         <div
           style={{
             position: "absolute",
             bottom: 14,
-            fontSize: 10,
-            letterSpacing: 2.5,
-            color: "#6B6B6B",
-            fontFamily: "monospace",
+            fontSize: 11,
+            letterSpacing: 1.5,
+            color: "rgba(60,60,67,0.6)",
             textTransform: "uppercase",
           }}
         >

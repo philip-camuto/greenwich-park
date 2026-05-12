@@ -60,7 +60,7 @@ export function AvenueMap({ category, score, verdict }: Props) {
                 width={40}
                 height={yS - yN}
                 fill="transparent"
-                stroke={isActive ? "var(--fg)" : "transparent"}
+                stroke={isActive ? "var(--label-primary)" : "transparent"}
                 strokeWidth={2}
                 role="button"
                 tabIndex={0}
@@ -149,7 +149,7 @@ export function AvenueMap({ category, score, verdict }: Props) {
                     : spineX - stubLen - 6
                 }
                 y={y + 3}
-                fill="var(--muted)"
+                fill="var(--label-secondary)"
                 fontSize={9}
                 fontFamily="var(--font-mono), monospace"
                 letterSpacing="0.1em"
@@ -165,14 +165,14 @@ export function AvenueMap({ category, score, verdict }: Props) {
       {/* tooltip / readout */}
       <div
         aria-live="polite"
-        className="mono text-[11px] tracking-[0.15em] uppercase text-[var(--muted)] text-center min-h-[1.2em]"
+        className="mono text-[11px] tracking-[0.15em] uppercase text-[var(--label-secondary)] text-center min-h-[1.2em]"
       >
         {activeBlockId
           ? readoutFor(activeBlockId, verdict, score)
           : "Hover or tap a block"}
       </div>
 
-      <p className="mono text-[10px] tracking-[0.18em] uppercase text-[var(--muted)] text-center leading-relaxed">
+      <p className="mono text-[10px] tracking-[0.18em] uppercase text-[var(--label-secondary)] text-center leading-relaxed">
         Block-level demand in Phase 3 (FOIA). Today, all blocks share the global score.
       </p>
     </div>

@@ -1,18 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Spectral } from "next/font/google";
 import "./globals.css";
-
-const spectral = Spectral({
-  variable: "--font-display",
-  weight: ["300", "400", "500"],
-  subsets: ["latin"],
-});
-
-const mono = JetBrains_Mono({
-  variable: "--font-mono",
-  weight: ["300", "400", "500"],
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Parking on Greenwich Avenue",
@@ -25,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#fafaf8",
+  themeColor: "#f2f2f7",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -37,11 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${spectral.variable} ${mono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full bg-[var(--bg)] text-[var(--fg)] flex flex-col">
+    <html lang="en" className="h-full antialiased">
+      <body className="min-h-full bg-[var(--bg-group)] text-[var(--label-primary)] flex flex-col">
         {children}
       </body>
     </html>

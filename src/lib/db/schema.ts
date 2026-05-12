@@ -60,3 +60,16 @@ export const observations = pgTable("observations", {
 
 export type Observation = typeof observations.$inferSelect;
 export type NewObservation = typeof observations.$inferInsert;
+
+// Phase 3 prep. Zone-level occupancy ingested from FOIA citations and/or
+// camera readings. Empty in Phase 1; populated when ground-truth data lands.
+export const observationsByZone = pgTable("observations_by_zone", {
+  id: serial("id").primaryKey(),
+  zoneId: text("zone_id").notNull(), // references PARKING_ZONES[].id (no FK constraint — inventory lives in code)
+  observedAt: timestamp("observed_at", { withTimezone: true }).notNull().defaultNow(),
+  occupiedCount: integer("occupied_count"), // null until Phase 3
+  occupancyRate: real("occupancy_rate"), // 0..1, null until Phase 3
+});
+
+export type ObservationByZone = typeof observationsByZone.$inferSelect;
+export type NewObservationByZone = typeof observationsByZone.$inferInsert;
