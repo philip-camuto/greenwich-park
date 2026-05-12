@@ -1,0 +1,38 @@
+name: ingest
+
+# Hits /api/cron/ingest on production every 30 minutes so we accumulate
+# observations 24/7 — not just when humans visit. This is the training-
+# data foundation for the Phase 2 model.
+#
+# Why GitHub Actions (and not Vercel Cron): Hobby plan caps Vercel Cron to
+# essentially daily-only, which doesn't meet the 15-min spec. GH Actions
+# is free, 5-min minimum, and just hits a URL.
+#
+# Drift: GH Actions cron can run up to ~15min late during peak load. That's
+# fine for our 15-min cache window — late runs just miss a cache cycle.
+
+on:
+  schedule:
+    - cron: "*/30 * * * *" # every 30 minutes, on :00 and :30 UTC
+  workflow_dispatch: {} # manual trigger from the Actions tab
+
+jobs:
+  ingest:
+    name: POST /api/cron/ingest
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Trigger ingest
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          response=$(curl -sS -w "\n%{http_code}" -X POST \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "User-Agent: greenwich-park-cron/1.0" \
+            "https://greenwich-park.vercel.app/api/cron/ingest")
+          status="${response##*$'\n'}"
+          body="${response%$'\n'*}"
+          echo "HTTP $status"
+          echo "$body"
+          [ "$status" = "200" ]
