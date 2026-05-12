@@ -114,7 +114,7 @@ Mobile-first, max-width 640pt, centered, identical structure on desktop with bre
    │  ──────────────────             │  ← inset divider
    │  Terra                   62  › │
    │  ──────────────────             │
-   │  Moli                    62  › │
+   │  Rag & Bone              62  › │
    │  ──────────────────             │
    │  Hinoki                  62  › │
    └─────────────────────────────────┘
@@ -143,12 +143,14 @@ Padding: 16pt horizontal on mobile, 32pt on desktop. Card spacing: 16pt vertical
 
 ### The 4 hotspots
 
-| ID | Name | Block (north-south on Ave) | Notes |
-|---|---|---|---|
-| `ginger-man` | The Ginger Man | Upper (Elm → Lewis) | Northern third of Ave |
-| `terra` | Terra | Upper-mid (Lewis → Mason) | Italian, mid-north |
-| `moli` | Moli | Placeholder: upper-mid (Lewis → Mason) | **OPEN: confirm exact block with user before plan execution.** The other three are confidently placed; Moli was added late in brainstorming without a confirmed address. |
-| `hinoki` | Hinoki | Lower (Havemeyer → Arch) | Sushi, southern third |
+| ID | Name | Address | Block (north-south on Ave) | Notes |
+|---|---|---|---|---|
+| `ginger-man` | The Ginger Man | 64 Greenwich Ave | Lower (Havemeyer → Arch) | Pub, south-mid |
+| `terra` | Terra | 156 Greenwich Ave | Mid (Lewis → Mason) | Italian, middle of Ave |
+| `rag-bone` | Rag & Bone | 50 Greenwich Ave | Lower (Havemeyer → Arch) | Retail, south-mid |
+| `hinoki` | Hinoki | 298 Greenwich Ave | Upper-mid (Lewis → Mason) | Sushi |
+
+(Addresses on Greenwich Ave increase going north. 1-99 = south end near Metro-North, 100s-200s = middle, 300+ = north end near Saks/Putnam.)
 
 Hotspots reference the existing block IDs in `avenue-map-data.ts`.
 
