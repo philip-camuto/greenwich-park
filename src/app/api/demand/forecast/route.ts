@@ -1,8 +1,19 @@
 import { NextResponse } from "next/server";
+import { buildForecastForGreenwich } from "@/lib/forecast";
 
-export const revalidate = 0;
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET() {
-  // TODO Step 6: 4-hour forecast in 15-min steps using time + weather forecast.
-  return NextResponse.json({ points: [] });
+  try {
+    const forecast = await buildForecastForGreenwich();
+    return NextResponse.json(forecast, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "forecast_unavailable";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

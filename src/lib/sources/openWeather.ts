@@ -112,15 +112,19 @@ export type HourlyForecastPoint = {
 };
 
 export async function fetchGreenwichHourlyForecast(): Promise<HourlyForecastPoint[]> {
-  const data = await fetchOpenMeteo(true);
-  const h = data.hourly;
-  if (!h) return [];
-  return h.time.map((t, i) => ({
-    timestamp: t,
-    tempF: h.temperature_2m[i],
-    condition: codeToCondition(h.weather_code[i]),
-    precipitationIn: h.precipitation[i],
-  }));
+  try {
+    const data = await fetchOpenMeteo(true);
+    const h = data.hourly;
+    if (!h) return [];
+    return h.time.map((t, i) => ({
+      timestamp: t,
+      tempF: h.temperature_2m[i],
+      condition: codeToCondition(h.weather_code[i]),
+      precipitationIn: h.precipitation[i],
+    }));
+  } catch {
+    return [];
+  }
 }
 
 // Exported for tests.
