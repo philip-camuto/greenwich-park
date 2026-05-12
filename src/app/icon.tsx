@@ -3,7 +3,6 @@ import { ImageResponse } from "next/og";
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
 
-// Favicon. Spectral P glyph on pure black — same DNA as the giant score.
 export default function Icon() {
   return new ImageResponse(
     (
@@ -11,12 +10,13 @@ export default function Icon() {
         style={{
           width: "100%",
           height: "100%",
-          background: "#000000",
-          color: "#f4f4f4",
+          background: "#FAFAF8",
+          color: "#111111",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           fontFamily: "serif",
+          fontStyle: "italic",
           fontSize: 26,
           fontWeight: 400,
           letterSpacing: -1,
