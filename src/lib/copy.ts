@@ -1,6 +1,8 @@
 import type { DemandCategory } from "@/lib/model/types";
 import { GREENWICH_TZ } from "@/lib/utils/time";
 
+const FALLBACK_COPY = "Won't get much easier in the next 4 hours.";
+
 export function verdictFor(category: DemandCategory): string {
   switch (category) {
     case "green":
@@ -28,10 +30,10 @@ export type ActionCopyInput = {
 };
 
 export function actionCopyFor({ currentScore, bestTime }: ActionCopyInput): string {
-  if (!bestTime) return "Won't get much easier in the next 4 hours.";
+  if (!bestTime) return FALLBACK_COPY;
   const gap = currentScore - bestTime.score;
   const at = formatGreenwichTime(bestTime.timestamp);
   if (gap > 20) return `Easier around ${at}.`;
   if (gap > 5) return `Should ease up by ${at}.`;
-  return "Won't get much easier in the next 4 hours.";
+  return FALLBACK_COPY;
 }
