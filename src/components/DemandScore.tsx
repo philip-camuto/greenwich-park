@@ -1,9 +1,10 @@
-import type { DemandCategory } from "@/lib/model/types";
+import type { Confidence, DemandCategory } from "@/lib/model/types";
 
 type Props = {
   score: number;
   category: DemandCategory;
   observedAt: string | Date;
+  confidence?: Confidence;
 };
 
 const STATUS_COPY: Record<DemandCategory, string> = {
@@ -28,14 +29,27 @@ function ageString(observedAt: string | Date, nowMs = Date.now()): string {
   return h === 1 ? "1 hour ago" : `${h} hours ago`;
 }
 
-export function DemandScore({ score, category, observedAt }: Props) {
+export function DemandScore({ score, category, observedAt, confidence }: Props) {
   const accent = ACCENT_VAR[category];
+  const showLowSignal = confidence === "low";
   return (
     <section className="flex flex-col gap-3 px-6">
       {/* Label rail */}
-      <div className="mono text-[11px] tracking-[0.18em] uppercase text-[var(--muted)] flex justify-between">
+      <div className="mono text-[11px] tracking-[0.18em] uppercase text-[var(--muted)] flex justify-between items-center">
         <span>Demand · Greenwich Ave</span>
-        <span>{category.toUpperCase()}</span>
+        <span className="flex items-center gap-2">
+          {showLowSignal && (
+            <span className="text-[var(--amber)] inline-flex items-center gap-1">
+              <span
+                aria-hidden
+                className="inline-block w-1.5 h-1.5 rounded-full"
+                style={{ background: "var(--amber)" }}
+              />
+              Low signal
+            </span>
+          )}
+          <span>{category.toUpperCase()}</span>
+        </span>
       </div>
 
       {/* The number itself — asymmetric, pushed left so the status can sit to its right at small sizes */}

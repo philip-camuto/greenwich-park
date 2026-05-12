@@ -15,6 +15,10 @@ export default async function Home() {
   ]);
 
   const category = observation.computedCategory as DemandCategory;
+  const confidence = observation.computedConfidence as
+    | "low"
+    | "medium"
+    | "high";
 
   return (
     <main className="min-h-dvh flex flex-col bg-[var(--bg)] text-[var(--fg)]">
@@ -37,6 +41,7 @@ export default async function Home() {
           score={observation.computedScore}
           category={category}
           observedAt={observation.observedAt}
+          confidence={confidence}
         />
       </div>
 
