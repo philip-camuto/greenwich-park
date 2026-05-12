@@ -74,6 +74,12 @@ export function AvenueMap({ category, score, verdict }: Props) {
                   setActiveBlockId((cur) => (cur === b.id ? null : cur))
                 }
                 onClick={() => setActiveBlockId(b.id)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setActiveBlockId(b.id);
+                  }
+                }}
                 style={{ cursor: "pointer", outline: "none" }}
               />
             </g>
@@ -157,7 +163,10 @@ export function AvenueMap({ category, score, verdict }: Props) {
       </svg>
 
       {/* tooltip / readout */}
-      <div className="mono text-[11px] tracking-[0.15em] uppercase text-[var(--muted)] text-center min-h-[1.2em]">
+      <div
+        aria-live="polite"
+        className="mono text-[11px] tracking-[0.15em] uppercase text-[var(--muted)] text-center min-h-[1.2em]"
+      >
         {activeBlockId
           ? readoutFor(activeBlockId, verdict, score)
           : "Hover or tap a block"}

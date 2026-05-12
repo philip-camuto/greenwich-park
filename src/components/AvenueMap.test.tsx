@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { AvenueMap } from "./AvenueMap";
 import { BLOCKS } from "./avenue-map-data";
 
@@ -25,5 +26,21 @@ describe("AvenueMap", () => {
     expect(
       screen.getByText(/Block-level demand in Phase 3/),
     ).toBeTruthy();
+  });
+
+  it("shows the active-block readout when a block is clicked", async () => {
+    const user = userEvent.setup();
+    render(<AvenueMap category="yellow" score={60} verdict="Moderately busy" />);
+    await user.click(screen.getAllByRole("button")[0]);
+    expect(screen.getByText(/BETWEEN/i)).toBeInTheDocument();
+  });
+
+  it("activates a block when Enter is pressed on a focused block", async () => {
+    const user = userEvent.setup();
+    render(<AvenueMap category="yellow" score={60} verdict="Moderately busy" />);
+    const firstBlock = screen.getAllByRole("button")[0];
+    firstBlock.focus();
+    await user.keyboard("{Enter}");
+    expect(screen.getByText(/BETWEEN/i)).toBeInTheDocument();
   });
 });
