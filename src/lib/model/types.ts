@@ -5,6 +5,7 @@ export type DemandScore = {
   score: number;
   category: DemandCategory;
   confidence: Confidence;
+  breakdown: ScoreBreakdown;
 };
 
 export type WeatherCondition =
@@ -23,6 +24,7 @@ export type WeatherSnapshot = {
   windMph: number;
   isDay: boolean;
   fetchedAt: string;
+  ok: boolean; // false on upstream error / missing data
 };
 
 export type TrafficSeverity = "none" | "light" | "moderate" | "heavy";
@@ -35,9 +37,23 @@ export type TrafficSnapshot = {
   southboundAffected: boolean;
   closureNearby: boolean;
   fetchedAt: string;
+  ok: boolean; // false on upstream error / missing key
 };
 
 export type HolidayKind = "closure" | "retail-spike" | "observed" | "none";
+
+// Greenwich has two distinct school worlds with non-overlapping calendars:
+//   public  = Greenwich Public Schools (GPS)
+//   private = Brunswick, Greenwich Country Day, Greenwich Academy, etc.
+// They diverge most on (1) the private 2-week spring break in early/mid March,
+// (2) private year ending ~3 weeks before public in late May/early June, and
+// (3) private winter break running a few days longer on each side.
+export type SchoolStatus = {
+  publicInSession: boolean;
+  privateInSession: boolean;
+  anyInSession: boolean;
+  allInSession: boolean;
+};
 
 export type TimeFeatures = {
   hour: number; // 0-23, America/New_York local
@@ -46,7 +62,8 @@ export type TimeFeatures = {
   isHoliday: boolean;
   holidayKind: HolidayKind;
   holidayName: string | null;
-  isSchoolInSession: boolean;
+  schoolStatus: SchoolStatus;
+  isSchoolInSession: boolean; // mirrors schoolStatus.allInSession (PRD field name)
   localDate: string; // YYYY-MM-DD in America/New_York
 };
 
@@ -56,8 +73,20 @@ export type SpecialEvent = {
   demandBoost: number; // +/- adjustment to score
 };
 
+export type ScoreBreakdown = {
+  base: number;
+  weatherMod: number;
+  trafficMod: number;
+  holidayMod: number;
+  schoolMod: number;
+  eventMod: number;
+  rawSum: number;
+  closureCapped: boolean;
+};
+
 export type ModelInput = {
   weather: WeatherSnapshot;
   traffic: TrafficSnapshot;
   time: TimeFeatures;
+  specialEvent?: SpecialEvent | null;
 };

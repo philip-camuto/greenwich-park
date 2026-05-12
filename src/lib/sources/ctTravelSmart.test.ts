@@ -40,10 +40,11 @@ describe("isGreenwichRelevant", () => {
   it("requires I-95", () => {
     expect(isGreenwichRelevant({ ...baseEvent, RoadwayName: "RT-15" })).toBe(false);
   });
-  it("accepts events within Greenwich radius", () => {
-    expect(isGreenwichRelevant(baseEvent)).toBe(true);
+  it("accepts events within Greenwich radius (no exit range)", () => {
+    expect(isGreenwichRelevant({ ...baseEvent, Description: "Disabled vehicle" }))
+      .toBe(true);
   });
-  it("rejects far events with no exit overlap", () => {
+  it("rejects far events with non-overlapping exit range", () => {
     expect(
       isGreenwichRelevant({
         ...baseEvent,
@@ -53,7 +54,7 @@ describe("isGreenwichRelevant", () => {
       }),
     ).toBe(false);
   });
-  it("accepts far events whose exit range overlaps Greenwich", () => {
+  it("accepts events whose exit range overlaps Greenwich (regardless of distance)", () => {
     expect(
       isGreenwichRelevant({
         ...baseEvent,
@@ -62,6 +63,18 @@ describe("isGreenwichRelevant", () => {
         Description: "I-95 NB between Exits 3 and 12",
       }),
     ).toBe(true);
+  });
+  it("rejects nearby event-start with explicit non-overlapping exit range (Westport queue)", () => {
+    // Real-world case: Westport NB queue starts at ~41.05 (4.7mi from Greenwich)
+    // but the queue actually covers Exits 7-24, north of Greenwich.
+    expect(
+      isGreenwichRelevant({
+        ...baseEvent,
+        Latitude: 41.047,
+        Longitude: -73.542,
+        Description: "I-95 NB is congested between Exits 7 and 24",
+      }),
+    ).toBe(false);
   });
 });
 
