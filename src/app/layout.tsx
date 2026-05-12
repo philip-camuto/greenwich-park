@@ -15,17 +15,17 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Greenwich Park",
+  title: "Parking on Greenwich Avenue",
   description: "Shows you when Greenwich Avenue is busy before you drive there.",
   appleWebApp: {
     capable: true,
-    title: "Greenwich Park",
-    statusBarStyle: "black-translucent",
+    title: "Greenwich Ave",
+    statusBarStyle: "default",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#fafaf8",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
