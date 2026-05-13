@@ -19,7 +19,6 @@ export function HotspotRow({ id, name, score, category }: Props) {
     <Link
       href={`/hotspot/${id}`}
       className="flex items-center justify-between min-h-[44px] py-2"
-      aria-label={`${name}, demand ${score} of 100, view forecast`}
     >
       <span className="text-[17px] text-[var(--label-primary)]">{name}</span>
       <span className="flex items-center gap-2">
