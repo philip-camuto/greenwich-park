@@ -71,6 +71,9 @@ export type SpecialEvent = {
   date: string; // YYYY-MM-DD
   name: string;
   demandBoost: number; // +/- adjustment to score
+  startsAt?: string; // ISO 8601 UTC
+  source?: "eventbrite" | "ticketmaster" | "town-ical" | "manual";
+  url?: string;
 };
 
 export type ScoreBreakdown = {
