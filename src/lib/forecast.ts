@@ -3,6 +3,7 @@ import type {
   DemandCategory,
   MetroNorthAlertsInput,
   MetroNorthInput,
+  ScoreBreakdown,
   SpecialEvent,
   TrafficSnapshot,
   WeatherSnapshot,
@@ -36,12 +37,26 @@ export const FORECAST_STEP_MINUTES = 15;
 export const FORECAST_POINT_COUNT =
   (FORECAST_HOURS * 60) / FORECAST_STEP_MINUTES + 1; // include current = 17
 
+export type ForecastSlotInputs = {
+  weather: WeatherSnapshot;
+  traffic: TrafficSnapshot;
+  metroNorth: MetroNorthInput | null;
+  metroNorthAlerts: MetroNorthAlertsInput | null;
+  eventCount: number;
+  dayOfWeek: number;
+};
+
 export type ForecastPoint = {
   timestamp: string; // ISO 8601 (UTC)
   localHour: number;
   localDate: string;
   score: number;
   category: DemandCategory;
+  // Optional: populated for slots we want to show a breakdown for. We only
+  // populate this on the first slot today since that's what the page shows
+  // as the "snapshot" view. Cheap to populate everywhere if Phase 2 wants it.
+  breakdown?: ScoreBreakdown;
+  inputs?: ForecastSlotInputs;
 };
 
 export type Forecast = {
@@ -132,12 +147,29 @@ export function buildForecast({
       metroNorth,
       metroNorthAlerts,
     });
+    // Only the first slot carries breakdown + inputs — that's the slot the
+    // page renders as the "snapshot" when planning for a future time. Other
+    // slots stay lean (just score + category) to keep the response small.
+    const isFirst = i === 0;
     points.push({
       timestamp: t.toISOString(),
       localHour: time.hour,
       localDate: time.localDate,
       score: demand.score,
       category: demand.category,
+      ...(isFirst
+        ? {
+            breakdown: demand.breakdown,
+            inputs: {
+              weather,
+              traffic,
+              metroNorth: metroNorth ?? null,
+              metroNorthAlerts: metroNorthAlerts ?? null,
+              eventCount: specialEvents.length,
+              dayOfWeek: time.dayOfWeek,
+            },
+          }
+        : {}),
     });
   }
 
