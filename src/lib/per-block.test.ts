@@ -34,8 +34,8 @@ describe("perBlockScores", () => {
   it("restaurant-heavy blocks heat up during dinner", () => {
     const dinner = perBlockScores(55, { hour: 19, dayOfWeek: 5 });
     const morning = perBlockScores(55, { hour: 9, dayOfWeek: 5 });
-    expect(dinner.havemeyer__arch.score).toBeGreaterThan(
-      morning.havemeyer__arch.score,
+    expect(dinner.lafayette__elm.score).toBeGreaterThan(
+      morning.lafayette__elm.score,
     );
   });
 });

@@ -52,7 +52,7 @@ describe("AvenueMap", () => {
     );
     await user.click(screen.getAllByRole("button")[0]);
     expect(
-      screen.getByText(/UPPER AVE.*OFFICES.*ANCHOR DEMAND/i),
+      screen.getByText(/GINGER MAN.*ANCHOR DEMAND/i),
     ).toBeInTheDocument();
   });
 

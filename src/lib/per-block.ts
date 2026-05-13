@@ -25,24 +25,33 @@ export type PerBlockScore = {
   reasons: string[];
 };
 
-// Anchor data reflects address-verified placements (May 2026):
-//   Apple Store        356 Greenwich Ave (between Fawcett Pl + Grigg St)
-//   RH Gallery         310 Greenwich Ave (Historic Post Office at Havemeyer Pl)
-//   RH Outdoor         264 Greenwich Ave
-//   RH Estates         265 Greenwich Ave (opening spring 2026)
-//   Saks Fifth Avenue  205 Greenwich Ave
-//   The Ginger Man      64 Greenwich Ave
-// The topmost block (Lafayette/Putnam → Elm) is not anchor retail — it
-// runs banks, offices, and the residential edge — so anchorMod is 0.
+// Address-verified anchor placements (May 2026). Greenwich Ave addresses
+// INCREASE going south: 1 starts at the Putnam Ave end (top), 400+ ends at
+// Steamboat Rd / Railroad Ave (bottom, by the train station).
+//   The Ginger Man      64 Greenwich Ave  → lafayette__elm   (top)
+//   Sephora             75                → elm__lewis
+//   CVS                 99                → elm__lewis
+//   Tiffany & Co.      140                → elm__lewis
+//   Lululemon          151                → lewis__mason
+//   Saks Fifth Avenue  205                → lewis__mason
+//   Betteridge         239                → mason__havemeyer
+//   RH Outdoor         264                → mason__havemeyer
+//   RH Estates         265 (spring 2026)  → mason__havemeyer
+//   RH Gallery         310 (Historic Post Office at Havemeyer Pl) → havemeyer__arch
+//   Apple              356                → arch__railroad
+//   Theory             396                → arch__railroad
+// Plus: Greenwich train station sits immediately south of arch__railroad
+// and pulls commuters into its own lots, dampening parking demand on that
+// southernmost block at rush hours.
 export const blockProfiles: Record<string, BlockProfile> = {
   lafayette__elm: {
     blockId: "lafayette__elm",
     label: "Lafayette / Putnam to Elm",
     capacity: "medium",
     relief: "medium",
-    kind: "mixed",
-    anchors: ["upper Ave — banks + offices"],
-    anchorMod: 0,
+    kind: "restaurant",
+    anchors: ["The Ginger Man", "upper Ave restaurants"],
+    anchorMod: 4,
   },
   elm__lewis: {
     blockId: "elm__lewis",
@@ -50,7 +59,7 @@ export const blockProfiles: Record<string, BlockProfile> = {
     capacity: "high",
     relief: "high",
     kind: "retail",
-    anchors: ["Apple", "upper retail"],
+    anchors: ["Tiffany", "Sephora", "CVS"],
     anchorMod: 5,
   },
   lewis__mason: {
@@ -59,7 +68,7 @@ export const blockProfiles: Record<string, BlockProfile> = {
     capacity: "low",
     relief: "medium",
     kind: "retail",
-    anchors: ["Saks Fifth Avenue", "Tiffany"],
+    anchors: ["Saks Fifth Avenue", "Lululemon"],
     anchorMod: 7,
   },
   mason__havemeyer: {
@@ -67,27 +76,27 @@ export const blockProfiles: Record<string, BlockProfile> = {
     label: "Mason / Bolling to Havemeyer",
     capacity: "medium",
     relief: "medium",
-    kind: "mixed",
-    anchors: ["Betteridge", "RH Outdoor", "RH Estates"],
-    anchorMod: 5,
+    kind: "retail",
+    anchors: ["RH Outdoor", "RH Estates", "Betteridge"],
+    anchorMod: 6,
   },
   havemeyer__arch: {
     blockId: "havemeyer__arch",
     label: "Havemeyer to Arch",
     capacity: "medium",
     relief: "low",
-    kind: "restaurant",
-    anchors: ["RH Gallery (Historic Post Office)", "Theory", "restaurants"],
+    kind: "retail",
+    anchors: ["RH Gallery (Historic Post Office)"],
     anchorMod: 6,
   },
   arch__railroad: {
     blockId: "arch__railroad",
     label: "Arch to Railroad",
     capacity: "high",
-    relief: "high",
-    kind: "restaurant",
-    anchors: ["The Ginger Man", "station-side restaurants"],
-    anchorMod: 2,
+    relief: "medium",
+    kind: "mixed",
+    anchors: ["Apple", "Theory", "train-station spillover"],
+    anchorMod: 4,
   },
 };
 
