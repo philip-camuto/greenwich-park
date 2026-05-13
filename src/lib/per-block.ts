@@ -25,32 +25,41 @@ export type PerBlockScore = {
   reasons: string[];
 };
 
+// Anchor data reflects address-verified placements (May 2026):
+//   Apple Store        356 Greenwich Ave (between Fawcett Pl + Grigg St)
+//   RH Gallery         310 Greenwich Ave (Historic Post Office at Havemeyer Pl)
+//   RH Outdoor         264 Greenwich Ave
+//   RH Estates         265 Greenwich Ave (opening spring 2026)
+//   Saks Fifth Avenue  205 Greenwich Ave
+//   The Ginger Man      64 Greenwich Ave
+// The topmost block (Lafayette/Putnam → Elm) is not anchor retail — it
+// runs banks, offices, and the residential edge — so anchorMod is 0.
 export const blockProfiles: Record<string, BlockProfile> = {
   lafayette__elm: {
     blockId: "lafayette__elm",
     label: "Lafayette / Putnam to Elm",
     capacity: "medium",
     relief: "medium",
-    kind: "retail",
-    anchors: ["Apple", "RH"],
-    anchorMod: 5,
+    kind: "mixed",
+    anchors: ["upper Ave — banks + offices"],
+    anchorMod: 0,
   },
   elm__lewis: {
     blockId: "elm__lewis",
     label: "Elm to Lewis",
     capacity: "high",
     relief: "high",
-    kind: "errand",
-    anchors: ["CVS", "Sephora"],
-    anchorMod: 1,
+    kind: "retail",
+    anchors: ["Apple", "upper retail"],
+    anchorMod: 5,
   },
   lewis__mason: {
     blockId: "lewis__mason",
     label: "Lewis to Mason / Bolling",
     capacity: "low",
     relief: "medium",
-    kind: "restaurant",
-    anchors: ["Terra", "Saks"],
+    kind: "retail",
+    anchors: ["Saks Fifth Avenue", "Tiffany"],
     anchorMod: 7,
   },
   mason__havemeyer: {
@@ -59,8 +68,8 @@ export const blockProfiles: Record<string, BlockProfile> = {
     capacity: "medium",
     relief: "medium",
     kind: "mixed",
-    anchors: ["Betteridge", "central retail"],
-    anchorMod: 4,
+    anchors: ["Betteridge", "RH Outdoor", "RH Estates"],
+    anchorMod: 5,
   },
   havemeyer__arch: {
     blockId: "havemeyer__arch",
@@ -68,17 +77,17 @@ export const blockProfiles: Record<string, BlockProfile> = {
     capacity: "medium",
     relief: "low",
     kind: "restaurant",
-    anchors: ["The Ginger Man", "lower Ave restaurants"],
-    anchorMod: 5,
+    anchors: ["RH Gallery (Historic Post Office)", "Theory", "restaurants"],
+    anchorMod: 6,
   },
   arch__railroad: {
     blockId: "arch__railroad",
     label: "Arch to Railroad",
     capacity: "high",
     relief: "high",
-    kind: "mixed",
-    anchors: ["station-side spillover"],
-    anchorMod: -2,
+    kind: "restaurant",
+    anchors: ["The Ginger Man", "station-side restaurants"],
+    anchorMod: 2,
   },
 };
 

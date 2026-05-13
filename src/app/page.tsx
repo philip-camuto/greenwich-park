@@ -1,8 +1,9 @@
+import { AvenueMap } from "@/components/AvenueMap";
+import { BreakdownCard } from "@/components/BreakdownCard";
 import { Card } from "@/components/Card";
 import { DaySegmentedControl } from "@/components/DaySegmentedControl";
 import { ForecastChart } from "@/components/ForecastChart";
 import { HotspotList } from "@/components/HotspotList";
-import { AvenueMap } from "@/components/AvenueMap";
 import { ScoreCard } from "@/components/ScoreCard";
 import { SectionCaption } from "@/components/SectionCaption";
 import { actionCopyFor, verdictFor } from "@/lib/copy";
@@ -96,14 +97,9 @@ export default async function Home({
     <main className="min-h-dvh bg-[var(--bg-group)]">
       <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5 px-4 pb-10 pt-6 sm:px-8 sm:pt-10 lg:grid lg:grid-cols-[minmax(0,1fr)_390px] lg:gap-6 lg:px-10 lg:pb-14">
         <header className="px-4 lg:col-span-2 lg:flex lg:items-end lg:justify-between lg:px-0">
-          <div>
-            <p className="mb-2 hidden text-[13px] font-semibold uppercase tracking-[0.08em] text-[var(--label-secondary)] lg:block">
-              Live demand model
-            </p>
-            <h1 className="display max-w-[720px] text-[34px] font-bold leading-tight tracking-tight text-[var(--label-primary)] lg:text-[56px]">
-              Parking on Greenwich Avenue
-            </h1>
-          </div>
+          <h1 className="display max-w-[720px] text-[34px] font-bold leading-tight tracking-tight text-[var(--label-primary)] lg:text-[56px]">
+            Parking on Greenwich Avenue
+          </h1>
           <p className="mt-1 text-[13px] text-[var(--label-secondary)] lg:mb-2 lg:text-right lg:text-[15px]">
             Greenwich · CT · {titleSubtitle(displayedAt)}
           </p>
@@ -156,34 +152,7 @@ export default async function Home({
             </Card>
           </div>
 
-          <Card className="hidden lg:block">
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div className="mono text-[22px] font-semibold tabular-nums text-[var(--label-primary)]">
-                  {forecast.points.length}
-                </div>
-                <div className="mt-1 text-[12px] font-medium text-[var(--label-secondary)]">
-                  samples
-                </div>
-              </div>
-              <div>
-                <div className="mono text-[22px] font-semibold tabular-nums text-[var(--label-primary)]">
-                  4h
-                </div>
-                <div className="mt-1 text-[12px] font-medium text-[var(--label-secondary)]">
-                  horizon
-                </div>
-              </div>
-              <div>
-                <div className="mono text-[22px] font-semibold tabular-nums text-[var(--label-primary)]">
-                  {confidence}
-                </div>
-                <div className="mt-1 text-[12px] font-medium text-[var(--label-secondary)]">
-                  signal
-                </div>
-              </div>
-            </div>
-          </Card>
+          {dayParam.kind === "today" && <BreakdownCard observation={observation} />}
         </aside>
 
         <footer className="px-4 text-[13px] leading-relaxed text-[var(--label-tertiary)] lg:col-span-2 lg:px-0">

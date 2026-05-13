@@ -4,17 +4,18 @@ import { BLOCKS } from "@/components/avenue-map-data";
 
 describe("scoreBlock", () => {
   it("combines capacity, anchor, time, and relief into an explainable score", () => {
-    const terraBlock = blockProfiles.lewis__mason;
-    const out = scoreBlock(55, terraBlock, { hour: 19, dayOfWeek: 5 });
+    const saksBlock = blockProfiles.lewis__mason;
+    const out = scoreBlock(55, saksBlock, { hour: 14, dayOfWeek: 6 });
     expect(out.score).toBeGreaterThan(55);
-    expect(out.reasons.join(" ")).toMatch(/Terra/i);
-    expect(out.reasons.join(" ")).toMatch(/dinner/i);
+    expect(out.reasons.join(" ")).toMatch(/Saks/i);
+    expect(out.reasons.join(" ")).toMatch(/shopping/i);
   });
-  it("discounts errand anchors with back-lot behavior", () => {
-    const cvsBlock = blockProfiles.elm__lewis;
-    const out = scoreBlock(55, cvsBlock, { hour: 14, dayOfWeek: 2 });
-    expect(out.reasons.join(" ")).toMatch(/CVS/i);
-    expect(out.score).toBeLessThan(scoreBlock(55, blockProfiles.lewis__mason, { hour: 14, dayOfWeek: 2 }).score);
+  it("the topmost block (offices + banks) scores below an anchor-heavy block", () => {
+    const top = blockProfiles.lafayette__elm;
+    const out = scoreBlock(55, top, { hour: 14, dayOfWeek: 2 });
+    expect(out.score).toBeLessThan(
+      scoreBlock(55, blockProfiles.lewis__mason, { hour: 14, dayOfWeek: 2 }).score,
+    );
   });
 });
 
@@ -33,6 +34,8 @@ describe("perBlockScores", () => {
   it("restaurant-heavy blocks heat up during dinner", () => {
     const dinner = perBlockScores(55, { hour: 19, dayOfWeek: 5 });
     const morning = perBlockScores(55, { hour: 9, dayOfWeek: 5 });
-    expect(dinner.lewis__mason.score).toBeGreaterThan(morning.lewis__mason.score);
+    expect(dinner.havemeyer__arch.score).toBeGreaterThan(
+      morning.havemeyer__arch.score,
+    );
   });
 });

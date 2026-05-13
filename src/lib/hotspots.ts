@@ -29,15 +29,15 @@ export const HOTSPOTS: Hotspot[] = [
     id: "apple",
     name: "Apple",
     address: "356 Greenwich Ave",
-    subLabel: "Upper Ave · Apple/RH block",
-    blockId: "lafayette__elm",
+    subLabel: "Upper Ave · Elm to Lewis",
+    blockId: "elm__lewis",
   },
   {
     id: "saks",
-    name: "Saks",
+    name: "Saks Fifth Avenue",
     address: "205 Greenwich Ave",
-    subLabel: "Central Ave · retail block",
-    blockId: "mason__havemeyer",
+    subLabel: "Central Ave · Lewis to Mason",
+    blockId: "lewis__mason",
   },
 ];
 

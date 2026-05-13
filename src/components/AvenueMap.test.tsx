@@ -51,7 +51,9 @@ describe("AvenueMap", () => {
       />,
     );
     await user.click(screen.getAllByRole("button")[0]);
-    expect(screen.getByText(/APPLE \+ RH ANCHOR DEMAND/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/UPPER AVE.*OFFICES.*ANCHOR DEMAND/i),
+    ).toBeInTheDocument();
   });
 
   it("activates a block when Enter is pressed on a focused block", async () => {
