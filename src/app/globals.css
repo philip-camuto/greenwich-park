@@ -11,10 +11,10 @@
   --separator-inset: rgba(60, 60, 67, 0.36);
   --link: #007aff;
 
-  /* State accents (iOS system colors) */
-  --state-quiet: #34c759;
-  --state-busy: #ff9500;
-  --state-tough: #ff3b30;
+  /* State accents — darkened from iOS system colors to pass WCAG AA 4.5:1 on #ffffff */
+  --state-quiet: #1c8534;
+  --state-busy: #ae6500;
+  --state-tough: #c01010;
 
   /* Map fills (low-saturation tint of state colors) */
   --map-fill-quiet: rgba(52, 199, 89, 0.18);
