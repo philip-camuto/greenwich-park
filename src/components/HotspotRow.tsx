@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AnimatedNumber } from "./AnimatedNumber";
 import type { DemandCategory } from "@/lib/model/types";
 
 type Props = {
@@ -33,12 +34,14 @@ export function HotspotRow({ id, name, subLabel, score, category, reasons }: Pro
         </span>
       </span>
       <span className="flex items-center gap-2">
-        <span
+        <AnimatedNumber
+          value={score}
           className="text-[18px] font-semibold tabular-nums tracking-normal lg:text-[20px]"
-          style={{ color: ACCENT[category] }}
-        >
-          {score}
-        </span>
+          style={{
+            color: ACCENT[category],
+            transition: "color 500ms ease-out",
+          }}
+        />
         <span
           aria-hidden
           className="text-[var(--label-tertiary)] text-[14px]"
