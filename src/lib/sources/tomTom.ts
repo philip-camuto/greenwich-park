@@ -3,6 +3,8 @@
 // Returns currentSpeed vs freeFlowSpeed which gives us a *real* congestion
 // ratio — much better than counting CT 511 events.
 
+import { fetchWithTimeout } from "@/lib/utils/fetch";
+
 const ENDPOINT = "https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json";
 const REVALIDATE_SECONDS = 300;
 // Pinned to Greenwich Ave / I-95 interchange area.
@@ -37,7 +39,7 @@ export async function fetchTomTomFlow(): Promise<TomTomFlow> {
   if (!key) return emptyFlow();
   try {
     const url = `${ENDPOINT}?point=${POINT_LAT},${POINT_LON}&key=${encodeURIComponent(key)}`;
-    const res = await fetch(url, { next: { revalidate: REVALIDATE_SECONDS } });
+    const res = await fetchWithTimeout(url, { next: { revalidate: REVALIDATE_SECONDS } });
     if (!res.ok) return emptyFlow();
     const data = (await res.json()) as TomTomResponse;
     const d = data.flowSegmentData;
@@ -56,7 +58,8 @@ export async function fetchTomTomFlow(): Promise<TomTomFlow> {
       fetchedAt: new Date().toISOString(),
       ok: true,
     };
-  } catch {
+  } catch (err) {
+    console.warn("[tomTom] fetch failed:", err);
     return emptyFlow();
   }
 }

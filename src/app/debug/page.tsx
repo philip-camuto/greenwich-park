@@ -18,10 +18,11 @@ export default async function DebugPage({
   searchParams: Promise<{ key?: string }>;
 }) {
   const expected = process.env.CRON_SECRET;
-  if (expected) {
-    const { key } = await searchParams;
-    if (key !== expected) notFound();
-  }
+  // Fail closed: when CRON_SECRET isn't configured, /debug is disabled
+  // entirely rather than served wide-open.
+  if (!expected) notFound();
+  const { key } = await searchParams;
+  if (key !== expected) notFound();
 
   const [{ observation, refreshed }, forecast, recent] = await Promise.all([
     getOrRefreshObservation(),

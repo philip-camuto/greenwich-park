@@ -30,7 +30,7 @@ jobs:
           response=$(curl -sS -w "\n%{http_code}" -X POST \
             -H "Authorization: Bearer $CRON_SECRET" \
             -H "User-Agent: greenwich-park-cron/1.0" \
-            "https://greenwich-park.vercel.app/api/cron/ingest")
+            "https://parking.philipcamuto.com/api/cron/ingest")
           status="${response##*$'\n'}"
           body="${response%$'\n'*}"
           echo "HTTP $status"

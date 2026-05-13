@@ -3,6 +3,7 @@
 // catches Stamford/Mohegan Sun-adjacent shows. Will return [] most days.
 
 import type { SpecialEvent } from "@/lib/model/types";
+import { fetchWithTimeout } from "@/lib/utils/fetch";
 
 const ENDPOINT = "https://app.ticketmaster.com/discovery/v2/events.json";
 const REVALIDATE_SECONDS = 3600;
@@ -23,14 +24,15 @@ export async function fetchTicketmasterGreenwichEvents(): Promise<SpecialEvent[]
       size: "20",
       apikey: key,
     });
-    const res = await fetch(`${ENDPOINT}?${params.toString()}`, {
+    const res = await fetchWithTimeout(`${ENDPOINT}?${params.toString()}`, {
       next: { revalidate: REVALIDATE_SECONDS },
     });
     if (!res.ok) return [];
     const data = (await res.json()) as TmResponse;
     const events = data._embedded?.events ?? [];
     return events.map(tmToSpecial);
-  } catch {
+  } catch (err) {
+    console.warn("[ticketmaster] fetch failed:", err);
     return [];
   }
 }

@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from "@/lib/utils/fetch";
+
 // MTA Daily Ridership dataset on data.ny.gov (Socrata). No key required.
 // Endpoint returns systemwide daily totals per mode. We filter to mode='MNR'
 // and use the most recent day as a proxy for "are commuters taking the train".
@@ -44,7 +46,7 @@ export async function fetchMetroNorthRidership(): Promise<MetroNorthRidership> {
       `${ENDPOINT}?$select=date,count` +
       `&$where=mode='MNR'` +
       `&$order=date DESC&$limit=1`;
-    const res = await fetch(url, { next: { revalidate: REVALIDATE_SECONDS } });
+    const res = await fetchWithTimeout(url, { next: { revalidate: REVALIDATE_SECONDS } });
     if (!res.ok) return empty();
     const rows = (await res.json()) as SocrataRow[];
     const row = rows[0];
@@ -58,7 +60,8 @@ export async function fetchMetroNorthRidership(): Promise<MetroNorthRidership> {
       ok: true,
       fetchedAt: new Date().toISOString(),
     };
-  } catch {
+  } catch (err) {
+    console.warn("[metroNorth] fetch failed:", err);
     return empty();
   }
 }
