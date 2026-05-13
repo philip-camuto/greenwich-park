@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   computeDemand,
   holidayModifier,
+  metroNorthModifier,
   schoolModifier,
   trafficModifier,
   weatherModifier,
@@ -250,9 +251,9 @@ describe("computeDemand integration", () => {
 
   it("breakdown sums to rawSum", () => {
     const out = computeDemand(input());
-    const { base, weatherMod, trafficMod, holidayMod, schoolMod, eventMod, rawSum } =
+    const { base, weatherMod, trafficMod, holidayMod, schoolMod, eventMod, metroNorthMod, rawSum } =
       out.breakdown;
-    expect(base + weatherMod + trafficMod + holidayMod + schoolMod + eventMod).toBe(
+    expect(base + weatherMod + trafficMod + holidayMod + schoolMod + eventMod + metroNorthMod).toBe(
       rawSum,
     );
   });
@@ -275,5 +276,50 @@ describe("computeDemand integration", () => {
       }),
     );
     expect(high.score).toBeLessThanOrEqual(100);
+  });
+});
+
+describe("metroNorthModifier", () => {
+  it("returns -8 when ridership is 10%+ above baseline", () => {
+    expect(metroNorthModifier({ ridership: 140000, vsBaseline: 140000 / 120000, ok: true })).toBe(-8);
+  });
+  it("returns +8 when ridership is 20%+ below baseline", () => {
+    expect(metroNorthModifier({ ridership: 90000, vsBaseline: 0.75, ok: true })).toBe(8);
+  });
+  it("returns 0 in the neutral band", () => {
+    expect(metroNorthModifier({ ridership: 120000, vsBaseline: 1, ok: true })).toBe(0);
+  });
+  it("returns 0 when not ok", () => {
+    expect(metroNorthModifier({ ridership: 140000, vsBaseline: 1.17, ok: false })).toBe(0);
+  });
+  it("returns 0 when null", () => {
+    expect(metroNorthModifier(null)).toBe(0);
+  });
+});
+
+describe("trafficModifier — TomTom path", () => {
+  function tomTomTraffic(speedRatio: number, closure = false): TrafficSnapshot {
+    return tr({
+      tomTomOk: true,
+      speedRatio,
+      currentSpeedMph: speedRatio * 30,
+      freeFlowSpeedMph: 30,
+      roadClosure: closure,
+    });
+  }
+  it("ratio < 0.4 → +8", () => {
+    expect(trafficModifier(tomTomTraffic(0.3))).toBe(8);
+  });
+  it("0.4-0.6 → +5", () => {
+    expect(trafficModifier(tomTomTraffic(0.5))).toBe(5);
+  });
+  it("0.6-0.8 → +2", () => {
+    expect(trafficModifier(tomTomTraffic(0.7))).toBe(2);
+  });
+  it("> 0.8 → 0", () => {
+    expect(trafficModifier(tomTomTraffic(0.9))).toBe(0);
+  });
+  it("road closure penalizes -5 on top", () => {
+    expect(trafficModifier(tomTomTraffic(0.7, true))).toBe(-3);
   });
 });

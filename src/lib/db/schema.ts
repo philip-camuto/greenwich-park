@@ -56,6 +56,18 @@ export const observations = pgTable("observations", {
   eventMod: integer("event_mod").notNull(),
   rawSum: integer("raw_sum").notNull(),
   closureCapped: boolean("closure_capped").notNull(),
+  // TomTom traffic (new in v2 sources)
+  trafficCurrentSpeedMph: real("traffic_current_speed_mph"),
+  trafficFreeFlowSpeedMph: real("traffic_free_flow_speed_mph"),
+  trafficSpeedRatio: real("traffic_speed_ratio"),
+  trafficTomTomOk: boolean("traffic_tomtom_ok"),
+  // MTA Metro-North ridership (new in v2 sources)
+  mtaRidership: integer("mta_ridership"),
+  mtaVsBaseline: real("mta_vs_baseline"),
+  mtaOk: boolean("mta_ok"),
+  metroNorthMod: integer("metro_north_mod"),
+  // Aggregated special events
+  specialEventCount: integer("special_event_count"),
 });
 
 export type Observation = typeof observations.$inferSelect;
