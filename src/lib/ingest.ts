@@ -17,10 +17,22 @@ import { fetchAggregatedSpecialEvents, eventsFiringAt } from "@/lib/sources/even
 
 export const STALE_AFTER_SECONDS = 15 * 60; // 15min: matches our source caches.
 export const MAX_STALE_DISPLAY_SECONDS = 60 * 60; // after 1h, block for fresh data.
+// Don't write more than once per minute. Also dedupes the cold-start race
+// where two simultaneous cache-miss requests on different serverless
+// instances would each insert a row ~100ms apart.
+export const MIN_INGEST_INTERVAL_MS = 60_000;
 
 let backgroundRefresh: Promise<Observation> | null = null;
 
 export async function runIngest(): Promise<Observation> {
+  // Short-circuit if a fresh row was written in the last MIN_INGEST_INTERVAL_MS.
+  // Defends against: (a) cron + on-demand racing, (b) leaked CRON_SECRET being
+  // hammered against /api/cron/ingest, (c) two cold-start instances racing.
+  const latest = await getLatestObservation();
+  if (latest && Date.now() - new Date(latest.observedAt).getTime() < MIN_INGEST_INTERVAL_MS) {
+    return latest;
+  }
+
   const [weather, traffic, tomTom, mta, mnrAlerts, aggregatedEvents] = await Promise.all([
     fetchGreenwichWeather(),
     fetchGreenwichTraffic(),
@@ -53,6 +65,10 @@ export async function runIngest(): Promise<Observation> {
     metroNorthAlerts: mnrAlerts,
   });
 
+  // Always insert, even when every source returned ok:false. Low-confidence
+  // rows are training-time signal ("data was unavailable at this timestamp")
+  // and the Phase 2 trainer filters by computedConfidence. Skipping outages
+  // would create gaps that look like cron failures instead of real states.
   const [row] = await db
     .insert(observations)
     .values({

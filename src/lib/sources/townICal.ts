@@ -6,6 +6,7 @@
 
 import ical from "ical";
 import type { SpecialEvent } from "@/lib/model/types";
+import { fetchWithTimeout } from "@/lib/utils/fetch";
 
 const ICAL_URL =
   "https://www.greenwichct.gov/common/modules/iCalendar/iCalendar.aspx?catID=14&feed=calendar";
@@ -15,7 +16,7 @@ const WINDOW_HOURS = 48;
 
 export async function fetchGreenwichTownEvents(): Promise<SpecialEvent[]> {
   try {
-    const res = await fetch(ICAL_URL, { next: { revalidate: REVALIDATE_SECONDS } });
+    const res = await fetchWithTimeout(ICAL_URL, { next: { revalidate: REVALIDATE_SECONDS } });
     if (!res.ok) return [];
     const text = await res.text();
     const parsed = ical.parseICS(text);
@@ -40,7 +41,8 @@ export async function fetchGreenwichTownEvents(): Promise<SpecialEvent[]> {
       });
     }
     return events;
-  } catch {
+  } catch (err) {
+    console.warn("[townICal] fetch failed:", err);
     return [];
   }
 }

@@ -2,6 +2,7 @@ import type {
   WeatherCondition,
   WeatherSnapshot,
 } from "@/lib/model/types";
+import { fetchWithTimeout } from "@/lib/utils/fetch";
 
 // Weather source: Open-Meteo. No API key required, free for non-commercial.
 // Swapped in for OpenWeather (which required a credit card on file for 3.0).
@@ -62,7 +63,7 @@ function buildUrl(extraHourly = false): string {
 }
 
 async function fetchOpenMeteo(extraHourly: boolean): Promise<OpenMeteoResponse> {
-  const res = await fetch(buildUrl(extraHourly), {
+  const res = await fetchWithTimeout(buildUrl(extraHourly), {
     next: { revalidate: REVALIDATE_SECONDS },
   });
   if (!res.ok) {
@@ -87,7 +88,8 @@ export async function fetchGreenwichWeather(): Promise<WeatherSnapshot> {
       fetchedAt: new Date().toISOString(),
       ok: true,
     };
-  } catch {
+  } catch (err) {
+    console.warn("[openWeather] current fetch failed:", err);
     return emptyWeather();
   }
 }
@@ -122,7 +124,8 @@ export async function fetchGreenwichHourlyForecast(): Promise<HourlyForecastPoin
       condition: codeToCondition(h.weather_code[i]),
       precipitationIn: h.precipitation[i],
     }));
-  } catch {
+  } catch (err) {
+    console.warn("[openWeather] hourly fetch failed:", err);
     return [];
   }
 }

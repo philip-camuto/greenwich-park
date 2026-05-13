@@ -1,25 +1,36 @@
 import { NextResponse } from "next/server";
 import { runIngest } from "@/lib/ingest";
 
-// POST or GET both trigger a write. Bearer auth applied when CRON_SECRET is set.
-// Vercel Cron on Hobby has very restricted frequency (essentially daily-only),
-// so Phase 1 does NOT install a vercel.json cron — the /api/demand/current
-// route hits runIngest() on cache miss instead. This endpoint remains useful
-// for manual triggers, future GitHub Actions cron, or a Pro-plan upgrade.
+// POST or GET both trigger a write. Bearer auth via CRON_SECRET is REQUIRED;
+// the endpoint refuses to serve when the secret is missing so a misconfigured
+// env can't accidentally expose a public write endpoint.
+//
+// Vercel Cron on Hobby is essentially daily-only, so Phase 1 uses a GitHub
+// Actions cron (.github/workflows/ingest.yml) hitting this endpoint every
+// 30 min. The route is also used for manual triggers from /debug.
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-function authorized(request: Request): boolean {
+type AuthResult = { ok: true } | { ok: false; status: number; error: string };
+
+function authorize(request: Request): AuthResult {
   const expected = process.env.CRON_SECRET;
-  if (!expected) return true; // unprotected when no secret is set
+  if (!expected) {
+    console.error("[cron/ingest] CRON_SECRET is not set — refusing to serve");
+    return { ok: false, status: 503, error: "not_configured" };
+  }
   const auth = request.headers.get("authorization");
-  return auth === `Bearer ${expected}`;
+  if (auth !== `Bearer ${expected}`) {
+    return { ok: false, status: 401, error: "unauthorized" };
+  }
+  return { ok: true };
 }
 
 async function handle(request: Request) {
-  if (!authorized(request)) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const auth = authorize(request);
+  if (!auth.ok) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
   try {
     const obs = await runIngest();

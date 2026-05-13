@@ -2,6 +2,7 @@ import type {
   TrafficSeverity,
   TrafficSnapshot,
 } from "@/lib/model/types";
+import { fetchWithTimeout } from "@/lib/utils/fetch";
 
 // CT Travel Smart (CTDOT 511). Only the /event endpoint is exposed on our
 // API key — speed sensors and camera endpoints 404. The event feed is rich
@@ -100,7 +101,7 @@ export async function fetchGreenwichTraffic(): Promise<TrafficSnapshot> {
     return emptySnapshot();
   }
   try {
-    const res = await fetch(`${BASE}?key=${encodeURIComponent(key)}`, {
+    const res = await fetchWithTimeout(`${BASE}?key=${encodeURIComponent(key)}`, {
       next: { revalidate: REVALIDATE_SECONDS },
     });
     if (!res.ok) {
@@ -110,7 +111,8 @@ export async function fetchGreenwichTraffic(): Promise<TrafficSnapshot> {
     }
     const events = (await res.json()) as CTEvent[];
     return summarize(events);
-  } catch {
+  } catch (err) {
+    console.warn("[ctTravelSmart] fetch failed:", err);
     return emptySnapshot();
   }
 }

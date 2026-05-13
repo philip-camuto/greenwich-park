@@ -1,3 +1,5 @@
+import { fetchWithTimeout } from "@/lib/utils/fetch";
+
 // Real-time Metro-North service alerts via the camsys collector that powers
 // the public mta.info status widget. JSON, no auth, no key rotation in
 // practice (it's served to every visitor on the MTA site).
@@ -148,11 +150,12 @@ export async function fetchMetroNorthAlerts(): Promise<MetroNorthAlerts> {
   try {
     const key = process.env.MTA_CAMSYS_KEY ?? DEFAULT_API_KEY;
     const url = `${ENDPOINT}?apikey=${encodeURIComponent(key)}`;
-    const res = await fetch(url, { next: { revalidate: REVALIDATE_SECONDS } });
+    const res = await fetchWithTimeout(url, { next: { revalidate: REVALIDATE_SECONDS } });
     if (!res.ok) return empty();
     const payload = (await res.json()) as Payload;
     return summarizeForNewHaven(payload);
-  } catch {
+  } catch (err) {
+    console.warn("[metroNorthAlerts] fetch failed:", err);
     return empty();
   }
 }
