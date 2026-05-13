@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { verdictFor } from "@/lib/copy";
 import type { DemandCategory } from "@/lib/model/types";
+import type { PerBlockScore } from "@/lib/per-block";
 import { BLOCKS, NODES } from "./avenue-map-data";
 
 type Props = {
   category: DemandCategory;
+  perBlock?: Record<string, PerBlockScore>;
   score: number;
   verdict: string;
 };
@@ -17,9 +20,9 @@ const FILL: Record<DemandCategory, string> = {
 };
 
 // SVG geometry. The Ave is a vertical spine; stubs branch east/west.
-const W = 280;
+const W = 340;
 const H = 480;
-const PAD = { t: 16, r: 80, b: 16, l: 80 };
+const PAD = { t: 16, r: 96, b: 16, l: 96 };
 const innerH = H - PAD.t - PAD.b;
 const spineX = W / 2;
 const stubLen = 56;
@@ -28,14 +31,14 @@ function yAt(yNorm: number): number {
   return PAD.t + yNorm * innerH;
 }
 
-export function AvenueMap({ category, score, verdict }: Props) {
+export function AvenueMap({ category, perBlock, score, verdict }: Props) {
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
 
   return (
     <div className="flex flex-col gap-3">
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="w-full max-w-[320px] h-auto block mx-auto"
+        className="mx-auto block h-auto w-full max-w-[320px] lg:max-w-[360px]"
         role="group"
         aria-label="Greenwich Avenue block diagram"
       >
@@ -44,6 +47,7 @@ export function AvenueMap({ category, score, verdict }: Props) {
           const yN = yAt(NODES.find((n) => n.id === b.northNodeId)!.y);
           const yS = yAt(NODES.find((n) => n.id === b.southNodeId)!.y);
           const isActive = activeBlockId === b.id;
+          const block = perBlock?.[b.id];
           return (
             <g key={b.id}>
               <rect
@@ -51,7 +55,7 @@ export function AvenueMap({ category, score, verdict }: Props) {
                 y={yN}
                 width={16}
                 height={yS - yN}
-                fill={FILL[category]}
+                fill={FILL[block?.category ?? category]}
               />
               {/* hit + focus target */}
               <rect
@@ -64,7 +68,7 @@ export function AvenueMap({ category, score, verdict }: Props) {
                 strokeWidth={2}
                 role="button"
                 tabIndex={0}
-                aria-label={b.label}
+                aria-label={`${b.label}, demand ${block?.score ?? score} of 100`}
                 onMouseEnter={() => setActiveBlockId(b.id)}
                 onMouseLeave={() =>
                   setActiveBlockId((cur) => (cur === b.id ? null : cur))
@@ -150,12 +154,13 @@ export function AvenueMap({ category, score, verdict }: Props) {
                 }
                 y={y + 3}
                 fill="var(--label-secondary)"
-                fontSize={9}
-                fontFamily="var(--font-mono), monospace"
-                letterSpacing="0.1em"
+                fontSize={10}
+                fontFamily="var(--font-text), system-ui, sans-serif"
+                fontWeight={650}
+                letterSpacing="0.04em"
                 textAnchor={showEast || isTerm ? "start" : "end"}
               >
-                {n.label.toUpperCase()}
+                {n.shortLabel.toUpperCase()}
               </text>
             </g>
           );
@@ -165,22 +170,38 @@ export function AvenueMap({ category, score, verdict }: Props) {
       {/* tooltip / readout */}
       <div
         aria-live="polite"
-        className="mono text-[11px] tracking-[0.15em] uppercase text-[var(--label-secondary)] text-center min-h-[1.2em]"
+        className="min-h-[1.2em] text-center text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--label-secondary)]"
       >
         {activeBlockId
-          ? readoutFor(activeBlockId, verdict, score)
+          ? readoutFor(activeBlockId, verdict, score, perBlock)
           : "Hover or tap a block"}
       </div>
 
-      <p className="mono text-[10px] tracking-[0.18em] uppercase text-[var(--label-secondary)] text-center leading-relaxed">
-        Block-level demand in Phase 3 (FOIA). Today, all blocks share the global score.
+      <p className="text-center text-[11px] font-medium leading-relaxed text-[var(--label-secondary)]">
+        Block scores blend anchor demand, curb capacity, side-street relief, and time of day.
       </p>
     </div>
   );
 }
 
-function readoutFor(blockId: string, verdict: string, score: number): string {
+function readoutFor(
+  blockId: string,
+  verdict: string,
+  score: number,
+  perBlock?: Record<string, PerBlockScore>,
+): string {
   const b = BLOCKS.find((x) => x.id === blockId);
   if (!b) return "";
-  return `${b.label.toUpperCase()} · ${verdict.toUpperCase()} · ${score}/100`;
+  const block = perBlock?.[blockId];
+  const blockScore = block?.score ?? score;
+  const blockVerdict = block ? verdictFor(block.category) : verdict;
+  const reason = block?.reasons[0];
+  return [
+    b.label.toUpperCase(),
+    blockVerdict.toUpperCase(),
+    `${blockScore}/100`,
+    reason,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }

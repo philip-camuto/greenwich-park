@@ -1,37 +1,63 @@
 export default function Loading() {
   return (
-    <main className="min-h-dvh bg-[var(--bg-group)] flex justify-center">
-      <div className="w-full max-w-[640px] px-4 sm:px-8 pt-6 sm:pt-12 pb-12 flex flex-col gap-4">
-        <header className="px-4 flex flex-col gap-2">
-          <Bar w="20rem" h="34px" />
-          <Bar w="14rem" h="13px" />
+    <main className="min-h-dvh bg-[var(--bg-group)]">
+      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5 px-4 pb-10 pt-6 sm:px-8 sm:pt-10 lg:grid lg:grid-cols-[minmax(0,1fr)_390px] lg:gap-6 lg:px-10 lg:pb-14">
+        <header className="px-4 lg:col-span-2 lg:px-0">
+          <div className="hidden lg:block">
+            <Bar w="8rem" h="13px" />
+          </div>
+          <div className="mt-2 flex flex-col gap-2">
+            <Bar w="min(38rem, 100%)" h="56px" />
+            <Bar w="14rem" h="15px" />
+          </div>
         </header>
-        <Bar w="100%" h="36px" />
-        <Card>
-          <Bar w="14rem" h="28px" />
-          <Bar w="5rem" h="17px" />
-          <Bar w="18rem" h="17px" />
-        </Card>
-        <Card>
-          <Bar w="100%" h="44px" />
-          <Bar w="100%" h="44px" />
-          <Bar w="100%" h="44px" />
-          <Bar w="100%" h="44px" />
-        </Card>
-        <Card>
-          <Bar w="100%" h="120px" />
-        </Card>
-        <Card>
-          <Bar w="100%" h="320px" />
-        </Card>
+        <div className="lg:col-span-2 lg:max-w-[520px]">
+          <Bar w="100%" h="36px" />
+        </div>
+        <section className="flex flex-col gap-5 lg:gap-6">
+          <Card className="lg:px-6 lg:py-6">
+            <Bar w="14rem" h="44px" />
+            <Bar w="6rem" h="20px" />
+            <Bar w="min(28rem, 100%)" h="20px" />
+          </Card>
+          <Card className="lg:px-6 lg:py-5">
+            <Bar w="12rem" h="20px" />
+            <Bar w="100%" h="112px" />
+            <div className="grid grid-cols-4 gap-2 lg:grid-cols-8">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Bar key={i} w="100%" h="50px" />
+              ))}
+            </div>
+          </Card>
+          <Card>
+            <Bar w="100%" h="44px" />
+            <Bar w="100%" h="44px" />
+            <Bar w="100%" h="44px" />
+            <Bar w="100%" h="44px" />
+          </Card>
+        </section>
+        <aside className="flex flex-col gap-5 lg:sticky lg:top-8 lg:self-start">
+          <Card className="lg:px-6 lg:py-6">
+            <Bar w="100%" h="420px" />
+          </Card>
+          <Card className="hidden lg:block">
+            <Bar w="100%" h="58px" />
+          </Card>
+        </aside>
       </div>
     </main>
   );
 }
 
-function Card({ children }: { children: React.ReactNode }) {
+function Card({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="bg-[var(--bg-surface)] rounded-[12px] px-4 py-4 flex flex-col gap-3">
+    <div className={`flex flex-col gap-3 rounded-[12px] bg-[var(--bg-surface)] px-4 py-4 ${className}`}>
       {children}
     </div>
   );

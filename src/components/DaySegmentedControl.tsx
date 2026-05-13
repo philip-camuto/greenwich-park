@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 import { DatePickerSheet } from "./DatePickerSheet";
 
 type Segment = { value: string; label: string };
@@ -14,14 +14,37 @@ const SEGMENTS: Segment[] = [
 export function DaySegmentedControl() {
   const router = useRouter();
   const params = useSearchParams();
-  const current = params.get("day") ?? "today";
+  const routeDay = params.get("day") ?? "today";
+  const routeTime = params.get("time") ?? "";
+  const [optimistic, setOptimistic] = useOptimistic(
+    { day: routeDay, time: routeTime },
+    (_state, next: { day: string; time: string }) => next,
+  );
+  const current = optimistic.day;
+  const currentTime = optimistic.time;
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  function updateUrl(nextDay: string, nextTime = currentTime) {
+    const p = new URLSearchParams(params.toString());
+    if (nextDay === "today") p.delete("day");
+    else p.set("day", nextDay);
+    if (nextTime) p.set("time", nextTime);
+    else p.delete("time");
+    const query = p.toString();
+    startTransition(() => {
+      router.replace(query ? `/?${query}` : "/", { scroll: false });
+    });
+  }
 
   function select(value: string) {
-    const p = new URLSearchParams(params.toString());
-    if (value === "today") p.delete("day");
-    else p.set("day", value);
-    router.push(`/?${p.toString()}`);
+    setOptimistic({ day: value, time: currentTime });
+    updateUrl(value);
+  }
+
+  function selectTime(value: string) {
+    setOptimistic({ day: current, time: value });
+    updateUrl(current, value);
   }
 
   function isCustomDate(v: string) {
@@ -39,16 +62,35 @@ export function DaySegmentedControl() {
 
   return (
     <>
-      <div className="bg-[#e5e5ea] rounded-[8px] p-[2px] flex gap-[2px] mb-4">
-        {SEGMENTS.map((s) => {
-          const selected = current === s.value || (current === "today" && s.value === "today");
-          return (
+      <div className="mb-4 lg:hidden">
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="flex min-h-[44px] w-full items-center justify-between rounded-[12px] bg-[#e5e5ea] px-3 text-left text-[15px] font-semibold text-[var(--label-primary)]"
+        >
+          <span>{plannerLabel(current, currentTime)}</span>
+          <span
+            aria-hidden
+            className="h-2 w-2 rotate-45 border-b-2 border-r-2 border-[var(--label-secondary)]"
+          />
+        </button>
+      </div>
+
+      <div
+        className={`mb-4 hidden flex-col gap-2 transition-opacity duration-200 lg:flex lg:flex-row ${
+          isPending ? "opacity-70" : "opacity-100"
+        }`}
+      >
+        <div className="flex flex-1 gap-[2px] rounded-[10px] bg-[#e5e5ea] p-[2px]">
+          {SEGMENTS.map((s) => {
+            const selected = current === s.value || (current === "today" && s.value === "today");
+            return (
             <button
               key={s.value}
               type="button"
               aria-pressed={selected}
               onClick={() => select(s.value)}
-              className={`flex-1 text-[14px] font-medium py-[6px] rounded-[7px] transition-colors ${
+              className={`min-h-[34px] flex-1 rounded-[8px] py-[6px] text-[14px] font-semibold transition-all duration-200 ${
                 selected
                   ? "bg-white shadow-[0_1px_2px_rgba(0,0,0,0.08)] text-[var(--label-primary)]"
                   : "text-[var(--label-secondary)]"
@@ -56,31 +98,69 @@ export function DaySegmentedControl() {
             >
               {s.label}
             </button>
-          );
-        })}
-        <button
-          key="pick"
-          type="button"
-          aria-pressed={!!customLabel}
-          onClick={() => setPickerOpen(true)}
-          className={`flex-1 text-[14px] font-medium py-[6px] rounded-[7px] transition-colors ${
-            customLabel
-              ? "bg-white shadow-[0_1px_2px_rgba(0,0,0,0.08)] text-[var(--label-primary)]"
-              : "text-[var(--label-secondary)]"
-          }`}
-        >
-          {customLabel ?? "+ Pick day"}
-        </button>
+            );
+          })}
+          <button
+            key="pick"
+            type="button"
+            aria-pressed={!!customLabel}
+            onClick={() => setPickerOpen(true)}
+            className={`min-h-[34px] flex-1 rounded-[8px] py-[6px] text-[14px] font-semibold transition-all duration-200 ${
+              customLabel
+                ? "bg-white text-[var(--label-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+                : "text-[var(--label-secondary)]"
+            }`}
+          >
+            {customLabel ?? "+ Pick day"}
+          </button>
+        </div>
+        <label className="flex min-h-[38px] items-center justify-between gap-3 rounded-[10px] bg-[#e5e5ea] px-3 py-[7px] text-[14px] font-semibold text-[var(--label-secondary)] lg:min-w-[170px]">
+          Time
+          <input
+            type="time"
+            aria-label="Arrival time"
+            value={currentTime}
+            onChange={(e) => selectTime(e.target.value)}
+            onInput={(e) => selectTime(e.currentTarget.value)}
+            className="bg-transparent text-right text-[var(--label-primary)] outline-none"
+          />
+        </label>
       </div>
       {pickerOpen && (
         <DatePickerSheet
+          initialDay={current}
+          initialTime={currentTime}
           onClose={() => setPickerOpen(false)}
-          onPick={(isoDate) => {
+          onPick={(selection) => {
             setPickerOpen(false);
-            select(isoDate);
+            setOptimistic({ day: selection.day, time: selection.time ?? "" });
+            updateUrl(selection.day, selection.time ?? "");
           }}
         />
       )}
     </>
   );
+}
+
+function plannerLabel(day: string, time: string): string {
+  const dayLabel =
+    day === "today"
+      ? "Today"
+      : day === "tomorrow"
+        ? "Tomorrow"
+        : new Date(day + "T12:00:00Z").toLocaleDateString("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+          });
+  return time ? `${dayLabel} · ${formatTime(time)}` : dayLabel;
+}
+
+function formatTime(time: string): string {
+  const [hourRaw, minute] = time.split(":");
+  const hour = parseInt(hourRaw, 10);
+  if (Number.isNaN(hour)) return time;
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}:${minute} ${suffix}`;
 }

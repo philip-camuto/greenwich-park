@@ -7,7 +7,7 @@ import { ScoreCard } from "@/components/ScoreCard";
 import { actionCopyFor } from "@/lib/copy";
 import { buildForecastForGreenwich } from "@/lib/forecast";
 import { hotspotById } from "@/lib/hotspots";
-import { getOrRefreshObservation } from "@/lib/ingest";
+import { getObservationForDisplay } from "@/lib/ingest";
 import { perBlockScores } from "@/lib/per-block";
 
 export const dynamic = "force-dynamic";
@@ -23,11 +23,14 @@ export default async function HotspotPage({
   if (!hotspot) notFound();
 
   const [{ observation }, forecast] = await Promise.all([
-    getOrRefreshObservation(),
+    getObservationForDisplay(),
     buildForecastForGreenwich(),
   ]);
 
-  const blockScores = perBlockScores(observation.computedScore);
+  const blockScores = perBlockScores(observation.computedScore, {
+    hour: observation.hour,
+    dayOfWeek: observation.dayOfWeek,
+  });
   const block = blockScores[hotspot.blockId];
 
   const action = actionCopyFor({
@@ -66,8 +69,9 @@ export default async function HotspotPage({
         </div>
 
         <p className="text-[13px] text-[var(--label-secondary)] px-4 leading-snug">
-          Per-block scores currently use stylized offsets. Phase 3 (FOIA
-          citation data) replaces them with measured demand.
+          This block score combines the Ave-wide model with nearby anchor
+          businesses, curb capacity, time-of-day demand, and side-street relief.
+          Phase 3 replaces these heuristics with measured demand.
         </p>
       </div>
     </main>
