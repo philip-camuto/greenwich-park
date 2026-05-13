@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type PointerEvent as RPointerEvent } from "react";
+import { AnimatedNumber } from "./AnimatedNumber";
 import type {
   DemandCategory,
   WeatherCondition,
@@ -309,6 +310,7 @@ export function ForecastChart({ points, bestTime }: Props) {
         {points.map((p, i) => (
           <rect
             key={p.timestamp}
+            className="forecast-bar"
             x={segX(i)}
             y={barY}
             // +0.6 overlap to avoid sub-pixel gaps between adjacent rects.
@@ -317,13 +319,15 @@ export function ForecastChart({ points, bestTime }: Props) {
             fill={BAND_COLOR[p.category]}
             style={{
               transition: "fill 500ms ease-out, opacity 200ms ease-out",
-              opacity: activeIdx == null || activeIdx === i ? 1 : 0.55,
+              opacity: activeIdx == null || activeIdx === i ? 1 : 0.5,
+              animationDelay: `${i * 22}ms`,
             }}
           />
         ))}
 
         {bestIdx > 0 && (
           <circle
+            className="forecast-best-ring"
             cx={dotX(bestIdx)}
             cy={dotY}
             r={7}
@@ -344,29 +348,26 @@ export function ForecastChart({ points, bestTime }: Props) {
         />
 
         {activeIdx != null && (
-          <g
-            style={{
-              transition: "transform 120ms ease-out",
-              transform: `translateX(${dotX(activeIdx) - dotX(0)}px)`,
-            }}
-          >
+          <g className="forecast-scrubber">
             <line
-              x1={dotX(0)}
+              x1={dotX(activeIdx)}
               y1={barY - 6}
-              x2={dotX(0)}
+              x2={dotX(activeIdx)}
               y2={barY + barHeight + 6}
               stroke="var(--label-primary)"
               strokeWidth={1.5}
               strokeLinecap="round"
               opacity={0.85}
+              style={{ transition: "x1 140ms ease-out, x2 140ms ease-out" }}
             />
             <circle
-              cx={dotX(0)}
+              cx={dotX(activeIdx)}
               cy={dotY}
               r={5}
               fill="white"
               stroke="var(--label-primary)"
               strokeWidth={2}
+              style={{ transition: "cx 140ms ease-out" }}
             />
           </g>
         )}
@@ -394,65 +395,73 @@ export function ForecastChart({ points, bestTime }: Props) {
       </svg>
 
       {/* Reserved slot detail row — fixed height so the layout doesn't jump
-          between hover / no-hover. */}
-      <div className="grid min-h-[64px] grid-cols-3 gap-2 rounded-[10px] bg-[var(--bg-group)] px-3 py-2">
-        {(() => {
-          const p = activePoint ?? points[0];
-          const inp = p.inputs;
-          const accent = ACCENT_VAR[p.category];
-          return (
-            <>
-              <div className="flex flex-col justify-center">
-                <div className="text-[10px] font-medium uppercase tracking-[0.06em] text-[var(--label-tertiary)]">
-                  Demand
-                </div>
-                <div
-                  className="mono text-[18px] font-semibold tabular-nums leading-tight"
-                  style={{ color: accent, transition: "color 300ms ease-out" }}
-                >
-                  {p.score}
-                </div>
-              </div>
-              <div className="flex flex-col justify-center">
-                <div className="text-[10px] font-medium uppercase tracking-[0.06em] text-[var(--label-tertiary)]">
-                  Weather
-                </div>
-                <div className="flex items-center gap-1.5 text-[14px] font-semibold leading-tight text-[var(--label-primary)]">
-                  {inp?.weather && (
-                    <span style={{ color: "var(--label-secondary)" }}>
-                      <WeatherGlyph c={inp.weather.condition} />
-                    </span>
-                  )}
-                  <span className="tabular-nums">
-                    {inp?.weather?.ok
-                      ? `${Math.round(inp.weather.tempF)}° ${conditionLabel(inp.weather.condition)}`
-                      : "—"}
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-col justify-center">
-                <div className="text-[10px] font-medium uppercase tracking-[0.06em] text-[var(--label-tertiary)]">
-                  I-95 Traffic
-                </div>
-                <div className="text-[14px] font-semibold leading-tight text-[var(--label-primary)]">
-                  {trafficLabel(inp?.traffic?.speedRatio)}
-                  {inp?.traffic?.speedRatio != null && (
-                    <span className="ml-1 text-[12px] font-medium tabular-nums text-[var(--label-tertiary)]">
-                      {Math.round(inp.traffic.speedRatio * 100)}%
-                    </span>
-                  )}
-                </div>
-              </div>
-            </>
-          );
-        })()}
-      </div>
+          between hover / no-hover. Numbers use AnimatedNumber so scrubbing
+          glides instead of snapping. */}
+      <SlotDetail point={activePoint ?? points[0]} />
 
-      <p className="min-h-[2.6em] text-[14px] leading-snug text-[var(--label-secondary)]">
+      <p className="min-h-[2.6em] text-[13px] leading-snug text-[var(--label-secondary)]">
         {activePoint
-          ? `${timeLabel(activePoint.timestamp)} · ${activePoint.score}/100 — drag to compare across the next 4 hours.`
-          : callout}
+          ? `Showing ${timeLabel(activePoint.timestamp)} — drag the bar to compare across the next 4 hours.`
+          : `${callout} Drag the bar to scrub.`}
       </p>
+    </div>
+  );
+}
+
+function SlotDetail({ point }: { point: Point }) {
+  const inp = point.inputs;
+  const accent = ACCENT_VAR[point.category];
+  const tempF = inp?.weather?.ok ? Math.round(inp.weather.tempF) : null;
+  const conditionText = inp?.weather?.ok ? conditionLabel(inp.weather.condition) : "—";
+  const speedRatio = inp?.traffic?.speedRatio;
+  const trafficPct =
+    speedRatio != null ? Math.max(0, Math.min(100, Math.round(speedRatio * 100))) : null;
+
+  return (
+    <div className="grid min-h-[64px] grid-cols-3 gap-2 rounded-[10px] bg-[var(--bg-group)] px-3 py-2">
+      <div className="flex flex-col justify-center">
+        <div className="text-[10px] font-medium uppercase tracking-[0.06em] text-[var(--label-tertiary)]">
+          Demand
+        </div>
+        <AnimatedNumber
+          value={point.score}
+          className="mono text-[18px] font-semibold tabular-nums leading-tight"
+          style={{ color: accent, transition: "color 300ms ease-out" }}
+        />
+      </div>
+      <div className="flex flex-col justify-center">
+        <div className="text-[10px] font-medium uppercase tracking-[0.06em] text-[var(--label-tertiary)]">
+          Weather
+        </div>
+        <div className="flex items-center gap-1.5 text-[14px] font-semibold leading-tight text-[var(--label-primary)]">
+          {inp?.weather && (
+            <span style={{ color: "var(--label-secondary)" }}>
+              <WeatherGlyph c={inp.weather.condition} />
+            </span>
+          )}
+          {tempF != null ? (
+            <span className="flex items-baseline gap-1 tabular-nums">
+              <AnimatedNumber value={tempF} />
+              <span>° {conditionText}</span>
+            </span>
+          ) : (
+            <span>—</span>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col justify-center">
+        <div className="text-[10px] font-medium uppercase tracking-[0.06em] text-[var(--label-tertiary)]">
+          I-95 Traffic
+        </div>
+        <div className="flex items-baseline gap-1 text-[14px] font-semibold leading-tight text-[var(--label-primary)]">
+          <span>{trafficLabel(speedRatio)}</span>
+          {trafficPct != null && (
+            <span className="text-[12px] font-medium tabular-nums text-[var(--label-tertiary)]">
+              <AnimatedNumber value={trafficPct} />%
+            </span>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
