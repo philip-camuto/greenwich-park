@@ -19,7 +19,7 @@ describe("HOTSPOTS", () => {
   it("includes the four expected names", () => {
     const names = HOTSPOTS.map((h) => h.name).sort();
     expect(names).toEqual(
-      ["Hinoki", "Rag & Bone", "Terra", "The Ginger Man"].sort(),
+      ["Apple", "Saks", "Terra", "The Ginger Man"].sort(),
     );
   });
 });

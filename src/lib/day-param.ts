@@ -2,7 +2,7 @@ import { GREENWICH_TZ } from "@/lib/utils/time";
 
 export type DayParam =
   | { kind: "today" }
-  | { kind: "future"; startAt: Date; isoDate: string };
+  | { kind: "future"; startAt: Date; isoDate: string; time?: string };
 
 const MAX_FUTURE_DAYS = 7;
 
@@ -21,10 +21,13 @@ function greenwichLocalYMD(at: Date): string {
 }
 
 function eightAmGreenwichOnDate(isoDate: string): Date {
-  // Compute the UTC moment that corresponds to 8:00 AM Greenwich-local on
-  // the given ISO date. We probe noon UTC, read what hour Greenwich saw at
-  // that moment, derive the offset, and translate 8 AM Greenwich back to UTC.
-  // Works across EST/EDT without hardcoding.
+  return greenwichLocalTimeOnDate(isoDate, "08:00");
+}
+
+function greenwichLocalTimeOnDate(isoDate: string, time: string): Date {
+  // Compute the UTC moment that corresponds to a Greenwich-local clock time.
+  // We probe early afternoon UTC, read the local hour, derive the UTC offset,
+  // and let Date.UTC handle day rollover for late evening local times.
   const probe = new Date(`${isoDate}T13:00:00.000Z`); // noon UTC-ish
   const localHourAtProbe = new Intl.DateTimeFormat("en-US", {
     timeZone: GREENWICH_TZ,
@@ -35,23 +38,41 @@ function eightAmGreenwichOnDate(isoDate: string): Date {
     .find((p) => p.type === "hour")?.value;
   const localHour = parseInt(localHourAtProbe ?? "9", 10);
   const offsetHours = 13 - localHour; // UTC - local
-  const utcHour = (8 + offsetHours + 24) % 24;
-  const hh = String(utcHour).padStart(2, "0");
-  return new Date(`${isoDate}T${hh}:00:00.000Z`);
+  const [requestedHour, requestedMinute] = time.split(":").map((x) => parseInt(x, 10));
+  const [year, month, day] = isoDate.split("-").map((x) => parseInt(x, 10));
+  return new Date(
+    Date.UTC(
+      year,
+      month - 1,
+      day,
+      requestedHour + offsetHours,
+      requestedMinute || 0,
+      0,
+      0,
+    ),
+  );
 }
 
 function isValidIsoDate(s: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s));
 }
 
+function isValidTime(s: string | undefined): s is string {
+  return typeof s === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
+}
+
 export function parseDayParam(
   raw: string | undefined,
   now: Date = new Date(),
+  timeRaw?: string,
 ): DayParam {
-  if (!raw || raw === "today") return { kind: "today" };
+  const requestedTime = isValidTime(timeRaw) ? timeRaw : undefined;
+  if ((!raw || raw === "today") && !requestedTime) return { kind: "today" };
 
   let isoDate: string;
-  if (raw === "tomorrow") {
+  if (!raw || raw === "today") {
+    isoDate = greenwichLocalYMD(now);
+  } else if (raw === "tomorrow") {
     const todayISO = greenwichLocalYMD(now);
     const d = new Date(`${todayISO}T12:00:00.000Z`);
     d.setUTCDate(d.getUTCDate() + 1);
@@ -63,12 +84,19 @@ export function parseDayParam(
   }
 
   const todayISO = greenwichLocalYMD(now);
-  if (isoDate <= todayISO) return { kind: "today" };
+  if (isoDate < todayISO) return { kind: "today" };
+  if (isoDate === todayISO && !requestedTime) return { kind: "today" };
 
   const max = new Date(`${todayISO}T12:00:00.000Z`);
   max.setUTCDate(max.getUTCDate() + MAX_FUTURE_DAYS);
   const maxISO = greenwichLocalYMD(max);
   if (isoDate > maxISO) return { kind: "today" };
 
-  return { kind: "future", startAt: eightAmGreenwichOnDate(isoDate), isoDate };
+  const startAt = requestedTime
+    ? greenwichLocalTimeOnDate(isoDate, requestedTime)
+    : eightAmGreenwichOnDate(isoDate);
+  if (isoDate === todayISO && startAt.getTime() <= now.getTime()) {
+    return { kind: "today" };
+  }
+  return { kind: "future", startAt, isoDate, time: requestedTime };
 }

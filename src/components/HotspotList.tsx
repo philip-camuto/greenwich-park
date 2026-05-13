@@ -25,8 +25,10 @@ export function HotspotList({ perBlock }: Props) {
               <HotspotRow
                 id={h.id}
                 name={h.name}
+                subLabel={h.subLabel}
                 score={block?.score ?? 0}
                 category={block?.category ?? "green"}
+                reasons={block?.reasons ?? [h.subLabel]}
               />
             </li>
           );
