@@ -21,13 +21,16 @@ export default function Loading() {
             <Bar w="min(28rem, 100%)" h="20px" />
           </Card>
           <Card className="lg:px-6 lg:py-5">
-            <Bar w="12rem" h="20px" />
-            <Bar w="100%" h="112px" />
-            <div className="grid grid-cols-4 gap-2 lg:grid-cols-8">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <Bar key={i} w="100%" h="50px" />
+            <div className="flex justify-end">
+              <Bar w="5rem" h="36px" />
+            </div>
+            <Bar w="100%" h="14px" />
+            <div className="flex justify-between">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Bar key={i} w="2.5rem" h="12px" />
               ))}
             </div>
+            <Bar w="min(20rem, 80%)" h="16px" />
           </Card>
           <Card>
             <Bar w="100%" h="44px" />
@@ -41,7 +44,12 @@ export default function Loading() {
             <Bar w="100%" h="420px" />
           </Card>
           <Card className="hidden lg:block">
-            <Bar w="100%" h="58px" />
+            <Bar w="100%" h="22px" />
+            <Bar w="100%" h="14px" />
+            <Bar w="100%" h="14px" />
+            <Bar w="100%" h="14px" />
+            <Bar w="100%" h="14px" />
+            <Bar w="100%" h="24px" />
           </Card>
         </aside>
       </div>
