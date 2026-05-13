@@ -1,6 +1,9 @@
 import { computeDemand } from "@/lib/model/heuristic";
 import type {
   DemandCategory,
+  MetroNorthAlertsInput,
+  MetroNorthInput,
+  SpecialEvent,
   TrafficSnapshot,
   WeatherSnapshot,
 } from "@/lib/model/types";
@@ -9,10 +12,13 @@ import {
   type HourlyForecastPoint,
 } from "@/lib/sources/openWeather";
 import { fetchGreenwichTraffic } from "@/lib/sources/ctTravelSmart";
+import { fetchMetroNorthRidership } from "@/lib/sources/metroNorth";
+import { fetchMetroNorthAlerts } from "@/lib/sources/metroNorthAlerts";
 import {
-  computeTimeFeatures,
-  findSpecialEvent,
-} from "@/lib/sources/timeFeatures";
+  eventsFiringAt,
+  fetchAggregatedSpecialEvents,
+} from "@/lib/sources/events";
+import { computeTimeFeatures } from "@/lib/sources/timeFeatures";
 import { GREENWICH_TZ } from "@/lib/utils/time";
 
 // 4-hour rolling forecast in 15-min increments. We re-run the same heuristic
@@ -97,21 +103,35 @@ export function buildForecast({
   currentWeather,
   traffic,
   hourly,
+  metroNorth,
+  metroNorthAlerts,
+  aggregatedEvents,
 }: {
   now: Date;
   currentWeather: WeatherSnapshot;
   traffic: TrafficSnapshot;
   hourly: HourlyForecastPoint[];
+  metroNorth?: MetroNorthInput | null;
+  metroNorthAlerts?: MetroNorthAlertsInput | null;
+  aggregatedEvents?: SpecialEvent[];
 }): Forecast {
   const idx = indexHourly(hourly);
   const points: ForecastPoint[] = [];
+  const events = aggregatedEvents ?? [];
 
   for (let i = 0; i < FORECAST_POINT_COUNT; i++) {
     const t = new Date(now.getTime() + i * FORECAST_STEP_MINUTES * 60 * 1000);
     const time = computeTimeFeatures(t);
     const weather = weatherForTimestamp(t, idx, currentWeather);
-    const specialEvent = findSpecialEvent(time.localDate);
-    const demand = computeDemand({ weather, traffic, time, specialEvent });
+    const specialEvents = eventsFiringAt(events, t);
+    const demand = computeDemand({
+      weather,
+      traffic,
+      time,
+      specialEvents,
+      metroNorth,
+      metroNorthAlerts,
+    });
     points.push({
       timestamp: t.toISOString(),
       localHour: time.hour,
@@ -142,10 +162,14 @@ export function buildForecast({
 export async function buildForecastForGreenwich(
   startAt: Date = new Date(),
 ): Promise<Forecast> {
-  const [traffic, hourly] = await Promise.all([
-    fetchGreenwichTraffic(),
-    fetchGreenwichHourlyForecast(),
-  ]);
+  const [traffic, hourly, metroNorth, metroNorthAlerts, aggregatedEvents] =
+    await Promise.all([
+      fetchGreenwichTraffic(),
+      fetchGreenwichHourlyForecast(),
+      fetchMetroNorthRidership(),
+      fetchMetroNorthAlerts(),
+      fetchAggregatedSpecialEvents(),
+    ]);
   const currentSlot = hourly.find((h) => h.timestamp === localHourKey(startAt));
   const currentWeather: WeatherSnapshot = currentSlot
     ? {
@@ -177,6 +201,9 @@ export async function buildForecastForGreenwich(
     currentWeather,
     traffic: trafficForDay,
     hourly,
+    metroNorth,
+    metroNorthAlerts,
+    aggregatedEvents,
   });
 }
 
