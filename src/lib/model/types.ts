@@ -38,6 +38,12 @@ export type TrafficSnapshot = {
   closureNearby: boolean;
   fetchedAt: string;
   ok: boolean; // false on upstream error / missing key
+  // NEW TomTom fields (all optional for backward compat):
+  currentSpeedMph?: number | null;
+  freeFlowSpeedMph?: number | null;
+  speedRatio?: number | null;
+  roadClosure?: boolean;
+  tomTomOk?: boolean;
 };
 
 export type HolidayKind = "closure" | "retail-spike" | "observed" | "none";
@@ -76,6 +82,12 @@ export type SpecialEvent = {
   url?: string;
 };
 
+export type MetroNorthInput = {
+  ridership: number | null;
+  vsBaseline: number | null;
+  ok: boolean;
+};
+
 export type ScoreBreakdown = {
   base: number;
   weatherMod: number;
@@ -83,6 +95,7 @@ export type ScoreBreakdown = {
   holidayMod: number;
   schoolMod: number;
   eventMod: number;
+  metroNorthMod: number; // NEW
   rawSum: number;
   closureCapped: boolean;
 };
@@ -91,5 +104,7 @@ export type ModelInput = {
   weather: WeatherSnapshot;
   traffic: TrafficSnapshot;
   time: TimeFeatures;
-  specialEvent?: SpecialEvent | null;
+  specialEvent?: SpecialEvent | null;    // existing — keep for back-compat
+  specialEvents?: SpecialEvent[];        // NEW — preferred when multiple events fire
+  metroNorth?: MetroNorthInput | null;   // NEW
 };

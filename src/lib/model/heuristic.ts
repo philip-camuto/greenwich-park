@@ -3,12 +3,14 @@ import type {
   DemandCategory,
   DemandScore,
   HolidayKind,
+  MetroNorthInput,
   ModelInput,
   TimeFeatures,
   TrafficSnapshot,
   WeatherSnapshot,
 } from "./types";
 import { getPrior } from "./priors";
+import { MTA_WEEKDAY_BASELINE } from "@/lib/sources/metroNorth";
 
 // Phase 1 heuristic. Pure function. Replaced wholesale in Phase 2 by a
 // trained model that consumes the same ModelInput shape.
@@ -56,6 +58,17 @@ export function weatherModifier(weather: WeatherSnapshot): number {
 }
 
 export function trafficModifier(traffic: TrafficSnapshot): number {
+  // Prefer TomTom live speed ratio when available; fall back to CT 511 events.
+  if (traffic.tomTomOk && typeof traffic.speedRatio === "number") {
+    let mod = 0;
+    if (traffic.speedRatio < 0.4) mod = 8;
+    else if (traffic.speedRatio < 0.6) mod = 5;
+    else if (traffic.speedRatio < 0.8) mod = 2;
+    else mod = 0;
+    if (traffic.roadClosure) mod -= 5;
+    return mod;
+  }
+  // Fallback: existing CT 511 event-count logic
   if (!traffic.ok) return 0;
   let mod = 0;
   switch (traffic.severity) {
@@ -71,6 +84,16 @@ export function trafficModifier(traffic: TrafficSnapshot): number {
   }
   if (traffic.closureNearby) mod -= 5;
   return mod;
+}
+
+export function metroNorthModifier(
+  mn: MetroNorthInput | null | undefined,
+): number {
+  if (!mn || !mn.ok || mn.ridership == null) return 0;
+  const ratio = mn.ridership / MTA_WEEKDAY_BASELINE;
+  if (ratio > 1.1) return -8;    // more train commuters → fewer drivers
+  if (ratio < 0.8) return 8;     // fewer train commuters → more drivers
+  return 0;
 }
 
 export function holidayModifier(kind: HolidayKind): number {
@@ -113,16 +136,27 @@ function clamp(n: number, lo: number, hi: number): number {
 }
 
 export function computeDemand(input: ModelInput): DemandScore {
-  const { weather, traffic, time, specialEvent } = input;
+  const { weather, traffic, time } = input;
 
   const base = getPrior(time.dayOfWeek, time.hour);
   const weatherMod = weatherModifier(weather);
   const trafficMod = trafficModifier(traffic);
   const holidayMod = holidayModifier(time.holidayKind);
   const schoolMod = schoolModifier(time);
-  const eventMod = specialEvent?.demandBoost ?? 0;
 
-  const rawSum = base + weatherMod + trafficMod + holidayMod + schoolMod + eventMod;
+  let eventMod = 0;
+  if (input.specialEvents && input.specialEvents.length > 0) {
+    for (const e of input.specialEvents) {
+      eventMod += e.demandBoost;
+    }
+    eventMod = Math.min(eventMod, 20);  // cap stacking
+  } else if (input.specialEvent) {
+    eventMod = input.specialEvent.demandBoost;
+  }
+
+  const metroNorthMod = metroNorthModifier(input.metroNorth);
+
+  const rawSum = base + weatherMod + trafficMod + holidayMod + schoolMod + eventMod + metroNorthMod;
   let raw = rawSum;
   const closureCapped = time.holidayKind === "closure";
   if (closureCapped) {
@@ -142,6 +176,7 @@ export function computeDemand(input: ModelInput): DemandScore {
       holidayMod,
       schoolMod,
       eventMod,
+      metroNorthMod,
       rawSum,
       closureCapped,
     },
