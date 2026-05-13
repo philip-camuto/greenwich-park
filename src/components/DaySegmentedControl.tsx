@@ -77,54 +77,65 @@ export function DaySegmentedControl() {
       </div>
 
       <div
-        className={`mb-4 hidden flex-col gap-2 transition-opacity duration-200 lg:flex lg:flex-row ${
+        className={`mb-4 hidden flex-wrap items-center gap-2 rounded-[12px] bg-[#e5e5ea] p-[3px] transition-opacity duration-200 lg:inline-flex ${
           isPending ? "opacity-70" : "opacity-100"
         }`}
+        aria-label="Plan a trip"
       >
-        <div className="flex flex-1 gap-[2px] rounded-[10px] bg-[#e5e5ea] p-[2px]">
-          {SEGMENTS.map((s) => {
-            const selected = current === s.value || (current === "today" && s.value === "today");
-            return (
+        {SEGMENTS.map((s) => {
+          const selected = current === s.value;
+          return (
             <button
               key={s.value}
               type="button"
               aria-pressed={selected}
               onClick={() => select(s.value)}
-              className={`min-h-[34px] flex-1 rounded-[8px] py-[6px] text-[14px] font-semibold transition-all duration-200 ${
+              className={`min-h-[34px] rounded-[9px] px-4 text-[14px] font-semibold transition-all duration-200 ${
                 selected
-                  ? "bg-white shadow-[0_1px_2px_rgba(0,0,0,0.08)] text-[var(--label-primary)]"
-                  : "text-[var(--label-secondary)]"
+                  ? "bg-white text-[var(--label-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+                  : "text-[var(--label-secondary)] hover:text-[var(--label-primary)]"
               }`}
             >
               {s.label}
             </button>
-            );
-          })}
+          );
+        })}
+        <button
+          key="pick"
+          type="button"
+          aria-pressed={!!customLabel}
+          onClick={() => setPickerOpen(true)}
+          className={`min-h-[34px] rounded-[9px] px-4 text-[14px] font-semibold transition-all duration-200 ${
+            customLabel
+              ? "bg-white text-[var(--label-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+              : "text-[var(--label-secondary)] hover:text-[var(--label-primary)]"
+          }`}
+        >
+          {customLabel ?? "Another date…"}
+        </button>
+
+        <span aria-hidden className="px-1 text-[14px] text-[var(--label-tertiary)]">
+          at
+        </span>
+
+        <input
+          type="time"
+          aria-label="Time of day"
+          value={currentTime}
+          onChange={(e) => selectTime(e.target.value)}
+          onInput={(e) => selectTime(e.currentTarget.value)}
+          className="min-h-[34px] rounded-[9px] bg-white px-3 text-[14px] font-semibold text-[var(--label-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.08)] outline-none"
+        />
+        {currentTime && (
           <button
-            key="pick"
             type="button"
-            aria-pressed={!!customLabel}
-            onClick={() => setPickerOpen(true)}
-            className={`min-h-[34px] flex-1 rounded-[8px] py-[6px] text-[14px] font-semibold transition-all duration-200 ${
-              customLabel
-                ? "bg-white text-[var(--label-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
-                : "text-[var(--label-secondary)]"
-            }`}
+            onClick={() => selectTime("")}
+            aria-label="Clear time"
+            className="min-h-[34px] rounded-[9px] px-2 text-[14px] font-medium text-[var(--label-tertiary)] hover:text-[var(--label-primary)]"
           >
-            {customLabel ?? "+ Pick day"}
+            ✕
           </button>
-        </div>
-        <label className="flex min-h-[38px] items-center justify-between gap-3 rounded-[10px] bg-[#e5e5ea] px-3 py-[7px] text-[14px] font-semibold text-[var(--label-secondary)] lg:min-w-[170px]">
-          Time
-          <input
-            type="time"
-            aria-label="Arrival time"
-            value={currentTime}
-            onChange={(e) => selectTime(e.target.value)}
-            onInput={(e) => selectTime(e.currentTarget.value)}
-            className="bg-transparent text-right text-[var(--label-primary)] outline-none"
-          />
-        </label>
+        )}
       </div>
       {pickerOpen && (
         <DatePickerSheet
