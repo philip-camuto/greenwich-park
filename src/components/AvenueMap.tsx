@@ -56,6 +56,7 @@ export function AvenueMap({ category, perBlock, score, verdict }: Props) {
                 width={16}
                 height={yS - yN}
                 fill={FILL[block?.category ?? category]}
+                style={{ transition: "fill 600ms ease-out" }}
               />
               {/* hit + focus target */}
               <rect
@@ -63,7 +64,11 @@ export function AvenueMap({ category, perBlock, score, verdict }: Props) {
                 y={yN}
                 width={40}
                 height={yS - yN}
-                fill="transparent"
+                fill={
+                  isActive
+                    ? "color-mix(in srgb, currentColor 6%, transparent)"
+                    : "transparent"
+                }
                 stroke={isActive ? "var(--label-primary)" : "transparent"}
                 strokeWidth={2}
                 role="button"
@@ -84,7 +89,11 @@ export function AvenueMap({ category, perBlock, score, verdict }: Props) {
                     setActiveBlockId(b.id);
                   }
                 }}
-                style={{ cursor: "pointer", outline: "none" }}
+                style={{
+                  cursor: "pointer",
+                  outline: "none",
+                  transition: "stroke 200ms ease-out, fill 200ms ease-out",
+                }}
               />
             </g>
           );

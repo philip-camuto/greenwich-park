@@ -52,12 +52,44 @@ export type ForecastPoint = {
   localDate: string;
   score: number;
   category: DemandCategory;
-  // Optional: populated for slots we want to show a breakdown for. We only
-  // populate this on the first slot today since that's what the page shows
-  // as the "snapshot" view. Cheap to populate everywhere if Phase 2 wants it.
+  // Populated for every slot so the interactive 4h chart can render per-slot
+  // weather + traffic without a second fetch. Breakdown still cheap because
+  // each slot already runs computeDemand internally.
   breakdown?: ScoreBreakdown;
   inputs?: ForecastSlotInputs;
 };
+
+// Hour-of-day target speed ratio for the New England commuter pattern.
+// Weekdays: AM rush 7-9, PM rush 16-19. Weekends: a shallower midday dip.
+// This is a coarse synthetic projection — we have no real traffic forecast.
+function targetSpeedRatio(hour: number, dayOfWeek: number): number {
+  const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
+  if (isWeekday) {
+    if (hour >= 7 && hour <= 9) return 0.7;
+    if (hour >= 16 && hour <= 19) return 0.65;
+    if (hour >= 10 && hour <= 15) return 0.9;
+    return 0.95;
+  }
+  if (hour >= 11 && hour <= 17) return 0.85;
+  return 0.95;
+}
+
+// Blend the current TomTom snapshot toward the hour-of-day target as we walk
+// forward in time. i=0 stays at observed; later slots converge to the target.
+export function projectTraffic(
+  base: TrafficSnapshot,
+  hour: number,
+  dayOfWeek: number,
+  i: number,
+  totalSteps: number,
+): TrafficSnapshot {
+  if (!base.ok || i === 0) return base;
+  const current = base.speedRatio ?? 1.0;
+  const target = targetSpeedRatio(hour, dayOfWeek);
+  const blend = Math.min(1, i / Math.max(1, totalSteps - 1));
+  const projected = current * (1 - blend) + target * blend;
+  return { ...base, speedRatio: projected };
+}
 
 export type Forecast = {
   generatedAt: string;
@@ -138,38 +170,37 @@ export function buildForecast({
     const t = new Date(now.getTime() + i * FORECAST_STEP_MINUTES * 60 * 1000);
     const time = computeTimeFeatures(t);
     const weather = weatherForTimestamp(t, idx, currentWeather);
+    const slotTraffic = projectTraffic(
+      traffic,
+      time.hour,
+      time.dayOfWeek,
+      i,
+      FORECAST_POINT_COUNT,
+    );
     const specialEvents = eventsFiringAt(events, t);
     const demand = computeDemand({
       weather,
-      traffic,
+      traffic: slotTraffic,
       time,
       specialEvents,
       metroNorth,
       metroNorthAlerts,
     });
-    // Only the first slot carries breakdown + inputs — that's the slot the
-    // page renders as the "snapshot" when planning for a future time. Other
-    // slots stay lean (just score + category) to keep the response small.
-    const isFirst = i === 0;
     points.push({
       timestamp: t.toISOString(),
       localHour: time.hour,
       localDate: time.localDate,
       score: demand.score,
       category: demand.category,
-      ...(isFirst
-        ? {
-            breakdown: demand.breakdown,
-            inputs: {
-              weather,
-              traffic,
-              metroNorth: metroNorth ?? null,
-              metroNorthAlerts: metroNorthAlerts ?? null,
-              eventCount: specialEvents.length,
-              dayOfWeek: time.dayOfWeek,
-            },
-          }
-        : {}),
+      breakdown: demand.breakdown,
+      inputs: {
+        weather,
+        traffic: slotTraffic,
+        metroNorth: metroNorth ?? null,
+        metroNorthAlerts: metroNorthAlerts ?? null,
+        eventCount: specialEvents.length,
+        dayOfWeek: time.dayOfWeek,
+      },
     });
   }
 

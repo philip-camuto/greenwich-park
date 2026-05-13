@@ -131,9 +131,8 @@ export default async function Home({
 
           <div>
             <SectionCaption>Next 4 Hours</SectionCaption>
-            <Card className="lg:px-6 lg:py-5">
+            <Card className="min-h-[268px] lg:px-6 lg:py-5">
               <ForecastChart
-                key={forecast.points[0]?.timestamp ?? "empty"}
                 points={forecast.points}
                 bestTime={forecast.bestTime}
               />
@@ -154,7 +153,7 @@ export default async function Home({
         <aside className="flex flex-col gap-5 lg:sticky lg:top-8 lg:self-start">
           <div>
             <SectionCaption>Greenwich Avenue</SectionCaption>
-            <Card className="lg:px-6 lg:py-6">
+            <Card className="min-h-[560px] lg:px-6 lg:py-6">
               <AvenueMap
                 category={category}
                 perBlock={blockScores}
