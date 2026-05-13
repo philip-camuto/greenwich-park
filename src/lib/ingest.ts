@@ -1,4 +1,5 @@
 import { desc } from "drizzle-orm";
+import { after } from "next/server";
 import { db } from "@/lib/db/client";
 import { observations, type Observation } from "@/lib/db/schema";
 import { computeDemand } from "@/lib/model/heuristic";
@@ -7,6 +8,7 @@ import { fetchGreenwichWeather } from "@/lib/sources/openWeather";
 import { computeTimeFeatures } from "@/lib/sources/timeFeatures";
 import { fetchTomTomFlow } from "@/lib/sources/tomTom";
 import { fetchMetroNorthRidership } from "@/lib/sources/metroNorth";
+import { fetchMetroNorthAlerts } from "@/lib/sources/metroNorthAlerts";
 import { fetchAggregatedSpecialEvents, eventsFiringAt } from "@/lib/sources/events";
 
 // Phase 1: ingest is the single write path. Called by /api/cron/ingest
@@ -14,13 +16,17 @@ import { fetchAggregatedSpecialEvents, eventsFiringAt } from "@/lib/sources/even
 // Same function so the DB stays consistent across both triggers.
 
 export const STALE_AFTER_SECONDS = 15 * 60; // 15min: matches our source caches.
+export const MAX_STALE_DISPLAY_SECONDS = 60 * 60; // after 1h, block for fresh data.
+
+let backgroundRefresh: Promise<Observation> | null = null;
 
 export async function runIngest(): Promise<Observation> {
-  const [weather, traffic, tomTom, mta, aggregatedEvents] = await Promise.all([
+  const [weather, traffic, tomTom, mta, mnrAlerts, aggregatedEvents] = await Promise.all([
     fetchGreenwichWeather(),
     fetchGreenwichTraffic(),
     fetchTomTomFlow(),
     fetchMetroNorthRidership(),
+    fetchMetroNorthAlerts(),
     fetchAggregatedSpecialEvents(),
   ]);
   const time = computeTimeFeatures();
@@ -44,6 +50,7 @@ export async function runIngest(): Promise<Observation> {
     time,
     specialEvents: firingEvents,
     metroNorth: mta,
+    metroNorthAlerts: mnrAlerts,
   });
 
   const [row] = await db
@@ -96,6 +103,11 @@ export async function runIngest(): Promise<Observation> {
       mtaVsBaseline: mta.vsBaseline,
       mtaOk: mta.ok,
       metroNorthMod: demand.breakdown.metroNorthMod,
+      // MTA real-time alerts (NH Line family).
+      mnrAlertsStatus: mnrAlerts.newHavenLineStatus,
+      mnrAlertsActiveCount: mnrAlerts.activeAlertCount,
+      mnrAlertsOk: mnrAlerts.ok,
+      metroNorthAlertsMod: demand.breakdown.metroNorthAlertsMod,
       // Aggregated special events.
       specialEventCount: firingEvents.length,
     })
@@ -117,6 +129,20 @@ export function isStale(obs: Observation, nowMs = Date.now()): boolean {
   return age > STALE_AFTER_SECONDS * 1000;
 }
 
+export function isTooOldForDisplay(obs: Observation, nowMs = Date.now()): boolean {
+  const age = nowMs - new Date(obs.observedAt).getTime();
+  return age > MAX_STALE_DISPLAY_SECONDS * 1000;
+}
+
+function scheduleRefresh(): void {
+  if (backgroundRefresh) return;
+  after(() => {
+    backgroundRefresh = runIngest().finally(() => {
+      backgroundRefresh = null;
+    });
+  });
+}
+
 // On-demand pattern: read latest; if stale or missing, write a new one.
 // This is what /api/demand/current hits.
 export async function getOrRefreshObservation(): Promise<{
@@ -129,4 +155,27 @@ export async function getOrRefreshObservation(): Promise<{
   }
   const fresh = await runIngest();
   return { observation: fresh, refreshed: true };
+}
+
+// UI read pattern: render quickly from the latest row when it is still
+// reasonably fresh, then refresh after the response. This avoids making the
+// user stare at a loading shell while every upstream signal responds.
+export async function getObservationForDisplay(): Promise<{
+  observation: Observation;
+  refreshed: boolean;
+  refreshScheduled: boolean;
+}> {
+  const latest = await getLatestObservation();
+  if (!latest || isTooOldForDisplay(latest)) {
+    const fresh = await runIngest();
+    return { observation: fresh, refreshed: true, refreshScheduled: false };
+  }
+
+  const stale = isStale(latest);
+  if (stale) scheduleRefresh();
+  return {
+    observation: latest,
+    refreshed: false,
+    refreshScheduled: stale,
+  };
 }

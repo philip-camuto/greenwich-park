@@ -3,6 +3,7 @@ import type {
   DemandCategory,
   DemandScore,
   HolidayKind,
+  MetroNorthAlertsInput,
   MetroNorthInput,
   ModelInput,
   TimeFeatures,
@@ -10,7 +11,6 @@ import type {
   WeatherSnapshot,
 } from "./types";
 import { getPrior } from "./priors";
-import { MTA_WEEKDAY_BASELINE } from "@/lib/sources/metroNorth";
 
 // Phase 1 heuristic. Pure function. Replaced wholesale in Phase 2 by a
 // trained model that consumes the same ModelInput shape.
@@ -89,11 +89,33 @@ export function trafficModifier(traffic: TrafficSnapshot): number {
 export function metroNorthModifier(
   mn: MetroNorthInput | null | undefined,
 ): number {
-  if (!mn || !mn.ok || mn.ridership == null) return 0;
-  const ratio = mn.ridership / MTA_WEEKDAY_BASELINE;
-  if (ratio > 1.1) return -8;    // more train commuters → fewer drivers
-  if (ratio < 0.8) return 8;     // fewer train commuters → more drivers
+  if (!mn || !mn.ok || mn.vsBaseline == null) return 0;
+  if (mn.vsBaseline > 1.1) return -8;   // more train commuters → fewer drivers
+  if (mn.vsBaseline < 0.8) return 8;    // fewer train commuters → more drivers
   return 0;
+}
+
+export function metroNorthAlertsModifier(
+  alerts: MetroNorthAlertsInput | null | undefined,
+): number {
+  // Trains down → commuters drive instead → demand on the Ave goes UP.
+  // Sized to match weather: weekday rush flipping car-mode is a real bump,
+  // but not as big as a snowstorm. Major delay/suspension is the headline
+  // signal here; minor delays nudge.
+  if (!alerts || !alerts.ok) return 0;
+  switch (alerts.newHavenLineStatus) {
+    case "suspended":
+      return 10;
+    case "major-delays":
+      return 8;
+    case "minor-delays":
+      return 3;
+    case "planned-work":
+    case "normal":
+    case "unknown":
+    default:
+      return 0;
+  }
 }
 
 export function holidayModifier(kind: HolidayKind): number {
@@ -155,8 +177,17 @@ export function computeDemand(input: ModelInput): DemandScore {
   }
 
   const metroNorthMod = metroNorthModifier(input.metroNorth);
+  const metroNorthAlertsMod = metroNorthAlertsModifier(input.metroNorthAlerts);
 
-  const rawSum = base + weatherMod + trafficMod + holidayMod + schoolMod + eventMod + metroNorthMod;
+  const rawSum =
+    base +
+    weatherMod +
+    trafficMod +
+    holidayMod +
+    schoolMod +
+    eventMod +
+    metroNorthMod +
+    metroNorthAlertsMod;
   let raw = rawSum;
   const closureCapped = time.holidayKind === "closure";
   if (closureCapped) {
@@ -177,6 +208,7 @@ export function computeDemand(input: ModelInput): DemandScore {
       schoolMod,
       eventMod,
       metroNorthMod,
+      metroNorthAlertsMod,
       rawSum,
       closureCapped,
     },

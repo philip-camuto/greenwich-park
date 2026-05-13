@@ -22,6 +22,7 @@ export async function GET() {
           schoolMod: observation.schoolMod,
           eventMod: observation.eventMod,
           metroNorthMod: observation.metroNorthMod ?? 0,
+          metroNorthAlertsMod: observation.metroNorthAlertsMod ?? 0,
           rawSum: observation.rawSum,
           closureCapped: observation.closureCapped,
         },
@@ -48,6 +49,11 @@ export async function GET() {
             ridership: observation.mtaRidership,
             vsBaseline: observation.mtaVsBaseline,
             ok: observation.mtaOk ?? false,
+          },
+          metroNorthAlerts: {
+            newHavenLineStatus: observation.mnrAlertsStatus ?? "unknown",
+            activeAlertCount: observation.mnrAlertsActiveCount ?? 0,
+            ok: observation.mnrAlertsOk ?? false,
           },
           specialEventCount: observation.specialEventCount ?? 0,
           time: {
