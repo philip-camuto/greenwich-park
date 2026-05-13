@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { desc } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { observations } from "@/lib/db/schema";
@@ -8,7 +9,20 @@ import { getOrRefreshObservation } from "@/lib/ingest";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export default async function DebugPage() {
+// Gate behind CRON_SECRET when set. The page renders the full observation
+// history and inputs — fine to expose privately, noisy to leak from a
+// public repo's deployed URL. Hit /debug?key=$CRON_SECRET.
+export default async function DebugPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ key?: string }>;
+}) {
+  const expected = process.env.CRON_SECRET;
+  if (expected) {
+    const { key } = await searchParams;
+    if (key !== expected) notFound();
+  }
+
   const [{ observation, refreshed }, forecast, recent] = await Promise.all([
     getOrRefreshObservation(),
     buildForecastForGreenwich(),
