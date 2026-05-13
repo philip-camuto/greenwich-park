@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   computeDemand,
   holidayModifier,
+  metroNorthAlertsModifier,
   metroNorthModifier,
   schoolModifier,
   trafficModifier,
@@ -281,19 +282,72 @@ describe("computeDemand integration", () => {
 
 describe("metroNorthModifier", () => {
   it("returns -8 when ridership is 10%+ above baseline", () => {
-    expect(metroNorthModifier({ ridership: 140000, vsBaseline: 140000 / 120000, ok: true })).toBe(-8);
+    expect(metroNorthModifier({ ridership: 250000, vsBaseline: 250000 / 220000, ok: true })).toBe(-8);
   });
   it("returns +8 when ridership is 20%+ below baseline", () => {
-    expect(metroNorthModifier({ ridership: 90000, vsBaseline: 0.75, ok: true })).toBe(8);
+    expect(metroNorthModifier({ ridership: 150000, vsBaseline: 0.68, ok: true })).toBe(8);
   });
   it("returns 0 in the neutral band", () => {
-    expect(metroNorthModifier({ ridership: 120000, vsBaseline: 1, ok: true })).toBe(0);
+    expect(metroNorthModifier({ ridership: 220000, vsBaseline: 1, ok: true })).toBe(0);
   });
   it("returns 0 when not ok", () => {
     expect(metroNorthModifier({ ridership: 140000, vsBaseline: 1.17, ok: false })).toBe(0);
   });
   it("returns 0 when null", () => {
     expect(metroNorthModifier(null)).toBe(0);
+  });
+});
+
+describe("metroNorthAlertsModifier", () => {
+  it("returns +10 when suspended", () => {
+    expect(
+      metroNorthAlertsModifier({
+        newHavenLineStatus: "suspended",
+        activeAlertCount: 1,
+        ok: true,
+      }),
+    ).toBe(10);
+  });
+  it("returns +8 on major delays", () => {
+    expect(
+      metroNorthAlertsModifier({
+        newHavenLineStatus: "major-delays",
+        activeAlertCount: 1,
+        ok: true,
+      }),
+    ).toBe(8);
+  });
+  it("returns +3 on minor delays", () => {
+    expect(
+      metroNorthAlertsModifier({
+        newHavenLineStatus: "minor-delays",
+        activeAlertCount: 2,
+        ok: true,
+      }),
+    ).toBe(3);
+  });
+  it("returns 0 for planned-work, normal, and unknown", () => {
+    for (const s of ["planned-work", "normal", "unknown"] as const) {
+      expect(
+        metroNorthAlertsModifier({
+          newHavenLineStatus: s,
+          activeAlertCount: 0,
+          ok: true,
+        }),
+      ).toBe(0);
+    }
+  });
+  it("returns 0 when not ok", () => {
+    expect(
+      metroNorthAlertsModifier({
+        newHavenLineStatus: "suspended",
+        activeAlertCount: 1,
+        ok: false,
+      }),
+    ).toBe(0);
+  });
+  it("returns 0 when null", () => {
+    expect(metroNorthAlertsModifier(null)).toBe(0);
   });
 });
 

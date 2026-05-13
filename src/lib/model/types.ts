@@ -88,6 +88,20 @@ export type MetroNorthInput = {
   ok: boolean;
 };
 
+export type MetroNorthAlertStatus =
+  | "normal"
+  | "planned-work"
+  | "minor-delays"
+  | "major-delays"
+  | "suspended"
+  | "unknown";
+
+export type MetroNorthAlertsInput = {
+  newHavenLineStatus: MetroNorthAlertStatus;
+  activeAlertCount: number;
+  ok: boolean;
+};
+
 export type ScoreBreakdown = {
   base: number;
   weatherMod: number;
@@ -95,7 +109,8 @@ export type ScoreBreakdown = {
   holidayMod: number;
   schoolMod: number;
   eventMod: number;
-  metroNorthMod: number; // NEW
+  metroNorthMod: number;
+  metroNorthAlertsMod: number;
   rawSum: number;
   closureCapped: boolean;
 };
@@ -106,5 +121,6 @@ export type ModelInput = {
   time: TimeFeatures;
   specialEvent?: SpecialEvent | null;    // existing — keep for back-compat
   specialEvents?: SpecialEvent[];        // NEW — preferred when multiple events fire
-  metroNorth?: MetroNorthInput | null;   // NEW
+  metroNorth?: MetroNorthInput | null;
+  metroNorthAlerts?: MetroNorthAlertsInput | null;
 };

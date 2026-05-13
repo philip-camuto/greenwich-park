@@ -66,6 +66,12 @@ export const observations = pgTable("observations", {
   mtaVsBaseline: real("mta_vs_baseline"),
   mtaOk: boolean("mta_ok"),
   metroNorthMod: integer("metro_north_mod"),
+  // MTA Metro-North real-time alerts (New Haven Line family).
+  // status: normal|planned-work|minor-delays|major-delays|suspended|unknown
+  mnrAlertsStatus: text("mnr_alerts_status"),
+  mnrAlertsActiveCount: integer("mnr_alerts_active_count"),
+  mnrAlertsOk: boolean("mnr_alerts_ok"),
+  metroNorthAlertsMod: integer("metro_north_alerts_mod"),
   // Aggregated special events
   specialEventCount: integer("special_event_count"),
 });
