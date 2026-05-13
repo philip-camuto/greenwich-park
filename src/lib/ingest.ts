@@ -4,7 +4,10 @@ import { observations, type Observation } from "@/lib/db/schema";
 import { computeDemand } from "@/lib/model/heuristic";
 import { fetchGreenwichTraffic } from "@/lib/sources/ctTravelSmart";
 import { fetchGreenwichWeather } from "@/lib/sources/openWeather";
-import { computeTimeFeatures, findSpecialEvent } from "@/lib/sources/timeFeatures";
+import { computeTimeFeatures } from "@/lib/sources/timeFeatures";
+import { fetchTomTomFlow } from "@/lib/sources/tomTom";
+import { fetchMetroNorthRidership } from "@/lib/sources/metroNorth";
+import { fetchAggregatedSpecialEvents, eventsFiringAt } from "@/lib/sources/events";
 
 // Phase 1: ingest is the single write path. Called by /api/cron/ingest
 // (for scheduled or manual writes) and by /api/demand/current on cache miss.
@@ -13,13 +16,35 @@ import { computeTimeFeatures, findSpecialEvent } from "@/lib/sources/timeFeature
 export const STALE_AFTER_SECONDS = 15 * 60; // 15min: matches our source caches.
 
 export async function runIngest(): Promise<Observation> {
-  const [weather, traffic] = await Promise.all([
+  const [weather, traffic, tomTom, mta, aggregatedEvents] = await Promise.all([
     fetchGreenwichWeather(),
     fetchGreenwichTraffic(),
+    fetchTomTomFlow(),
+    fetchMetroNorthRidership(),
+    fetchAggregatedSpecialEvents(),
   ]);
   const time = computeTimeFeatures();
-  const specialEvent = findSpecialEvent(time.localDate);
-  const demand = computeDemand({ weather, traffic, time, specialEvent });
+  const now = new Date();
+  const firingEvents = eventsFiringAt(aggregatedEvents, now);
+
+  // Merge TomTom into the traffic snapshot
+  const mergedTraffic = {
+    ...traffic,
+    currentSpeedMph: tomTom.currentSpeedMph,
+    freeFlowSpeedMph: tomTom.freeFlowSpeedMph,
+    speedRatio: tomTom.speedRatio,
+    tomTomOk: tomTom.ok,
+    // If TomTom reports closure, surface it on the merged snapshot too
+    closureNearby: traffic.closureNearby || tomTom.roadClosure,
+  };
+
+  const demand = computeDemand({
+    weather,
+    traffic: mergedTraffic,
+    time,
+    specialEvents: firingEvents,
+    metroNorth: mta,
+  });
 
   const [row] = await db
     .insert(observations)
@@ -37,7 +62,7 @@ export async function runIngest(): Promise<Observation> {
       trafficEventsTotal: traffic.i95EventsTotal,
       trafficNorthboundAffected: traffic.northboundAffected,
       trafficSouthboundAffected: traffic.southboundAffected,
-      trafficClosureNearby: traffic.closureNearby,
+      trafficClosureNearby: mergedTraffic.closureNearby,
       trafficOk: traffic.ok,
       // Time.
       localDate: time.localDate,
@@ -61,6 +86,18 @@ export async function runIngest(): Promise<Observation> {
       eventMod: demand.breakdown.eventMod,
       rawSum: demand.breakdown.rawSum,
       closureCapped: demand.breakdown.closureCapped,
+      // TomTom traffic (new in v2 sources).
+      trafficCurrentSpeedMph: tomTom.currentSpeedMph,
+      trafficFreeFlowSpeedMph: tomTom.freeFlowSpeedMph,
+      trafficSpeedRatio: tomTom.speedRatio,
+      trafficTomTomOk: tomTom.ok,
+      // MTA Metro-North ridership (new in v2 sources).
+      mtaRidership: mta.ridership,
+      mtaVsBaseline: mta.vsBaseline,
+      mtaOk: mta.ok,
+      metroNorthMod: demand.breakdown.metroNorthMod,
+      // Aggregated special events.
+      specialEventCount: firingEvents.length,
     })
     .returning();
   return row;
