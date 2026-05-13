@@ -92,11 +92,16 @@ export const blockProfiles: Record<string, BlockProfile> = {
   arch__railroad: {
     blockId: "arch__railroad",
     label: "Arch to Railroad",
-    capacity: "high",
-    relief: "medium",
-    kind: "mixed",
-    anchors: ["Apple", "Theory", "train-station spillover"],
-    anchorMod: 4,
+    // Two competing forces: Apple is a flagship that pulls hard (Genius Bar
+    // bookings, weekend traffic) AND the train station next door siphons
+    // commuter parking into the station lots. Net: medium capacity, low
+    // relief (limited side streets between Arch and the station), and a
+    // healthy anchor pull from the Apple flagship + Theory.
+    capacity: "medium",
+    relief: "low",
+    kind: "retail",
+    anchors: ["Apple", "Theory"],
+    anchorMod: 6,
   },
 };
 

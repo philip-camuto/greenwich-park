@@ -6,6 +6,10 @@ import { ForecastChart } from "@/components/ForecastChart";
 import { HotspotList } from "@/components/HotspotList";
 import { ScoreCard } from "@/components/ScoreCard";
 import { SectionCaption } from "@/components/SectionCaption";
+import {
+  breakdownViewFromForecastPoint,
+  breakdownViewFromObservation,
+} from "@/lib/breakdown-view";
 import { actionCopyFor, verdictFor } from "@/lib/copy";
 import { parseDayParam } from "@/lib/day-param";
 import { buildForecastForGreenwich } from "@/lib/forecast";
@@ -93,6 +97,14 @@ export default async function Home({
     bestTime: forecast.bestTime,
   });
 
+  // Breakdown view: today renders straight from the persisted observation;
+  // a future-date selection renders from the first forecast slot, which we
+  // populated with the full breakdown + input snapshot in buildForecast.
+  const breakdownView =
+    dayParam.kind === "today"
+      ? breakdownViewFromObservation(observation)
+      : breakdownViewFromForecastPoint(forecast.points[0]);
+
   return (
     <main className="min-h-dvh bg-[var(--bg-group)]">
       <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5 px-4 pb-10 pt-6 sm:px-8 sm:pt-10 lg:grid lg:grid-cols-[minmax(0,1fr)_390px] lg:gap-6 lg:px-10 lg:pb-14">
@@ -152,7 +164,7 @@ export default async function Home({
             </Card>
           </div>
 
-          {dayParam.kind === "today" && <BreakdownCard observation={observation} />}
+          {breakdownView && <BreakdownCard view={breakdownView} />}
         </aside>
 
         <footer className="px-4 text-[13px] leading-relaxed text-[var(--label-tertiary)] lg:col-span-2 lg:px-0">

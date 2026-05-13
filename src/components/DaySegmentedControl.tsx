@@ -4,12 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useState, useTransition } from "react";
 import { DatePickerSheet } from "./DatePickerSheet";
 
-type Segment = { value: string; label: string };
-
-const SEGMENTS: Segment[] = [
-  { value: "today", label: "Today" },
-  { value: "tomorrow", label: "Tomorrow" },
-];
+// Two-option toggle: today vs. anything-not-today. Tomorrow used to be its
+// own chip, but the picker sheet handles that case with one extra tap.
 
 export function DaySegmentedControl() {
   const router = useRouter();
@@ -77,36 +73,29 @@ export function DaySegmentedControl() {
       </div>
 
       <div
-        className={`mb-4 hidden flex-wrap items-center gap-2 rounded-[12px] bg-[#e5e5ea] p-[3px] transition-opacity duration-200 lg:inline-flex ${
+        className={`mb-4 hidden items-center gap-2 rounded-[12px] bg-[#e5e5ea] p-[3px] transition-opacity duration-200 lg:inline-flex ${
           isPending ? "opacity-70" : "opacity-100"
         }`}
         aria-label="Plan a trip"
       >
-        {SEGMENTS.map((s) => {
-          const selected = current === s.value;
-          return (
-            <button
-              key={s.value}
-              type="button"
-              aria-pressed={selected}
-              onClick={() => select(s.value)}
-              className={`min-h-[34px] rounded-[9px] px-4 text-[14px] font-semibold transition-all duration-200 ${
-                selected
-                  ? "bg-white text-[var(--label-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
-                  : "text-[var(--label-secondary)] hover:text-[var(--label-primary)]"
-              }`}
-            >
-              {s.label}
-            </button>
-          );
-        })}
         <button
-          key="pick"
           type="button"
-          aria-pressed={!!customLabel}
+          aria-pressed={current === "today"}
+          onClick={() => select("today")}
+          className={`min-h-[34px] rounded-[9px] px-4 text-[14px] font-semibold transition-all duration-200 ${
+            current === "today"
+              ? "bg-white text-[var(--label-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
+              : "text-[var(--label-secondary)] hover:text-[var(--label-primary)]"
+          }`}
+        >
+          Today
+        </button>
+        <button
+          type="button"
+          aria-pressed={current !== "today"}
           onClick={() => setPickerOpen(true)}
           className={`min-h-[34px] rounded-[9px] px-4 text-[14px] font-semibold transition-all duration-200 ${
-            customLabel
+            current !== "today"
               ? "bg-white text-[var(--label-primary)] shadow-[0_1px_2px_rgba(0,0,0,0.08)]"
               : "text-[var(--label-secondary)] hover:text-[var(--label-primary)]"
           }`}
