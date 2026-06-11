@@ -47,13 +47,19 @@ describe("parseDayParam", () => {
       expect(out.startAt.toISOString()).toBe("2026-05-15T12:00:00.000Z");
     }
   });
-  it("rejects past dates → falls back to today", () => {
+  it("accepts past dates → future (caller treats as historical-style preview)", () => {
     const out = parseDayParam("2026-05-10", new Date("2026-05-12T20:00:00Z"));
-    expect(out.kind).toBe("today");
+    expect(out.kind).toBe("future");
+    if (out.kind === "future") {
+      expect(out.isoDate).toBe("2026-05-10");
+    }
   });
-  it("rejects > 7 days out → falls back to today", () => {
+  it("accepts > 7 days out (Open-Meteo hourly will fall back to current snapshot)", () => {
     const out = parseDayParam("2026-06-01", new Date("2026-05-12T20:00:00Z"));
-    expect(out.kind).toBe("today");
+    expect(out.kind).toBe("future");
+    if (out.kind === "future") {
+      expect(out.isoDate).toBe("2026-06-01");
+    }
   });
   it("rejects malformed → falls back to today", () => {
     const out = parseDayParam("garbage", new Date("2026-05-12T20:00:00Z"));

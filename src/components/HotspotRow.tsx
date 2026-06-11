@@ -23,20 +23,20 @@ export function HotspotRow({ id, name, subLabel, score, category, reasons }: Pro
     <Link
       href={`/hotspot/${id}`}
       aria-label={`${name}, demand ${score} of 100`}
-      className="flex min-h-[56px] items-center justify-between gap-4 py-3 lg:min-h-[64px]"
+      className="flex min-h-[54px] items-center justify-between gap-4 py-2.5 transition-colors duration-200 hover:bg-[rgba(255,255,255,0.025)] lg:min-h-[58px]"
     >
       <span className="min-w-0">
-        <span className="block truncate text-[17px] text-[var(--label-primary)] lg:text-[18px]">
+        <span className="block truncate text-[15px] font-medium text-[var(--label-primary)] lg:text-[16px]">
           {name}
         </span>
-        <span className="mt-0.5 block truncate text-[12px] font-medium text-[var(--label-secondary)]">
+        <span className="mt-0.5 block truncate text-[12px] text-[var(--label-tertiary)]">
           {subLabel} · {reason}
         </span>
       </span>
       <span className="flex items-center gap-2">
         <AnimatedNumber
           value={score}
-          className="text-[18px] font-semibold tabular-nums tracking-normal lg:text-[20px]"
+          className="mono text-[16px] font-semibold tabular-nums tracking-[-0.02em] lg:text-[18px]"
           style={{
             color: ACCENT[category],
             transition: "color 500ms ease-out",
@@ -44,7 +44,7 @@ export function HotspotRow({ id, name, subLabel, score, category, reasons }: Pro
         />
         <span
           aria-hidden
-          className="text-[var(--label-tertiary)] text-[14px]"
+          className="text-[14px] text-[var(--label-tertiary)]"
         >
           ›
         </span>

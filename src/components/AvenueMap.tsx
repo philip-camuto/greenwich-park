@@ -64,12 +64,8 @@ export function AvenueMap({ category, perBlock, score, verdict }: Props) {
                 y={yN}
                 width={40}
                 height={yS - yN}
-                fill={
-                  isActive
-                    ? "color-mix(in srgb, currentColor 6%, transparent)"
-                    : "transparent"
-                }
-                stroke={isActive ? "var(--label-primary)" : "transparent"}
+                fill={isActive ? "rgba(255,255,255,0.05)" : "transparent"}
+                stroke={isActive ? "var(--label-secondary)" : "transparent"}
                 strokeWidth={2}
                 role="button"
                 tabIndex={0}
@@ -99,18 +95,22 @@ export function AvenueMap({ category, perBlock, score, verdict }: Props) {
           );
         })}
 
-        {/* Ave spine */}
-        <line
-          x1={spineX}
-          y1={PAD.t}
-          x2={spineX}
-          y2={H - PAD.b}
-          stroke="var(--map-line)"
-          strokeWidth={1}
-        />
+        {/* Decorations sit visually on top of the hit targets, so route
+            pointer events past them — otherwise the 1px spine line steals
+            the hover when the cursor lands exactly on it. */}
+        <g pointerEvents="none">
+          {/* Ave spine */}
+          <line
+            x1={spineX}
+            y1={PAD.t}
+            x2={spineX}
+            y2={H - PAD.b}
+            stroke="var(--map-line)"
+            strokeWidth={1}
+          />
 
-        {/* cross-street stubs + nodes + labels */}
-        {NODES.map((n) => {
+          {/* cross-street stubs + nodes + labels */}
+          {NODES.map((n) => {
           const y = yAt(n.y);
           const showEast = n.side === "east" || n.side === "both";
           const showWest = n.side === "west" || n.side === "both";
@@ -164,9 +164,9 @@ export function AvenueMap({ category, perBlock, score, verdict }: Props) {
                 y={y + 3}
                 fill="var(--label-secondary)"
                 fontSize={10}
-                fontFamily="var(--font-text), system-ui, sans-serif"
-                fontWeight={650}
-                letterSpacing="0.04em"
+                fontFamily="var(--font-mono), ui-monospace, monospace"
+                fontWeight={500}
+                letterSpacing="0.08em"
                 textAnchor={showEast || isTerm ? "start" : "end"}
               >
                 {n.shortLabel.toUpperCase()}
@@ -174,19 +174,23 @@ export function AvenueMap({ category, perBlock, score, verdict }: Props) {
             </g>
           );
         })}
+        </g>
       </svg>
 
-      {/* tooltip / readout */}
+      {/* Tooltip / readout. Reserves 2 lines of height + clamps to 2 max so
+          that swapping between the empty hint and the longest hover string
+          doesn't reflow the description below or the BreakdownCard further
+          down the aside. */}
       <div
         aria-live="polite"
-        className="min-h-[1.2em] text-center text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--label-secondary)]"
+        className="mono line-clamp-2 min-h-[2.4em] text-center text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--label-secondary)]"
       >
         {activeBlockId
           ? readoutFor(activeBlockId, verdict, score, perBlock)
           : "Hover or tap a block"}
       </div>
 
-      <p className="text-center text-[11px] font-medium leading-relaxed text-[var(--label-secondary)]">
+      <p className="text-center text-[12px] leading-relaxed text-[var(--label-tertiary)]">
         Block scores blend anchor demand, curb capacity, side-street relief, and time of day.
       </p>
     </div>

@@ -92,6 +92,41 @@ export const observationsByZone = pgTable("observations_by_zone", {
 export type ObservationByZone = typeof observationsByZone.$inferSelect;
 export type NewObservationByZone = typeof observationsByZone.$inferInsert;
 
+// Private field calibration logs from /lab. These are intentionally concrete
+// observations ("found a spot in one pass", "packed") that can later be used
+// to tune block, time, weather, and event modifiers against real ground truth.
+export const fieldObservations = pgTable("field_observations", {
+  id: serial("id").primaryKey(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  observedAt: timestamp("observed_at", { withTimezone: true }).notNull().defaultNow(),
+  modelObservedAt: timestamp("model_observed_at", { withTimezone: true }),
+  observationId: integer("observation_id"),
+
+  blockId: text("block_id").notNull(),
+  userRating: integer("user_rating").notNull(), // 0..5 field scale
+  userScore: integer("user_score").notNull(), // mapped 0..100 demand score
+  predictedScore: integer("predicted_score").notNull(),
+  predictedCategory: text("predicted_category").notNull(),
+  predictedConfidence: text("predicted_confidence").notNull(),
+  predictionError: integer("prediction_error").notNull(), // userScore - predictedScore
+
+  notes: text("notes"),
+  weatherCondition: text("weather_condition"),
+  weatherTempF: real("weather_temp_f"),
+  trafficSeverity: text("traffic_severity"),
+  specialEventCount: integer("special_event_count"),
+  localDate: text("local_date"),
+  hour: integer("hour"),
+  dayOfWeek: integer("day_of_week"),
+  clientElapsedMs: integer("client_elapsed_ms"),
+  clientHash: text("client_hash"),
+  userAgent: text("user_agent"),
+  qualityFlags: text("quality_flags"),
+});
+
+export type FieldObservation = typeof fieldObservations.$inferSelect;
+export type NewFieldObservation = typeof fieldObservations.$inferInsert;
+
 // FOIA parking citations from Greenwich Parking Services (received
 // 2026-06-11): 21,892 tickets on Lower/Upper Greenwich Ave, Jan 2022 -
 // Dec 2024. One-time historical dump, not a live feed — used offline to

@@ -14,25 +14,26 @@ export default function Error({
   }, [error]);
 
   return (
-    <main className="min-h-dvh bg-[var(--bg-group)] flex justify-center">
-      <div className="w-full max-w-[640px] px-4 sm:px-8 pt-12 pb-12 flex flex-col gap-4">
-        <header className="px-4">
-          <h1 className="display text-[28px] font-bold leading-tight">
+    <main className="flex min-h-dvh justify-center bg-[var(--bg-group)]">
+      <div className="flex w-full max-w-[640px] flex-col gap-4 px-4 pb-12 pt-12 sm:px-8">
+        <header className="rounded-[8px] border border-[var(--separator)] bg-[var(--bg-surface)] p-5">
+          <p className="mono mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--label-tertiary)]">
+            Data pipeline
+          </p>
+          <h1 className="text-[28px] font-semibold leading-tight">
             No signal
           </h1>
-          <p className="text-[17px] mt-2 text-[var(--label-primary)]">
+          <p className="mt-2 text-[15px] leading-relaxed text-[var(--label-secondary)]">
             We couldn&rsquo;t reach our data sources just now. Public APIs occasionally hiccup.
           </p>
-        </header>
-        <div className="px-4">
           <button
             type="button"
             onClick={reset}
-            className="min-h-[44px] px-5 py-2 rounded-[10px] bg-[var(--link)] text-white text-[17px] font-medium"
+            className="mt-5 min-h-[40px] rounded-[6px] bg-[var(--label-primary)] px-4 py-2 text-[15px] font-semibold text-[var(--bg-group)]"
           >
             Try again
           </button>
-        </div>
+        </header>
       </div>
     </main>
   );

@@ -5,13 +5,36 @@ import { ForecastChart } from "@/components/ForecastChart";
 import { SectionCaption } from "@/components/SectionCaption";
 import { ScoreCard } from "@/components/ScoreCard";
 import { actionCopyFor } from "@/lib/copy";
-import { buildForecastForGreenwich } from "@/lib/forecast";
+import { buildForecastForGreenwich, type Forecast } from "@/lib/forecast";
 import { hotspotById } from "@/lib/hotspots";
 import { getObservationForDisplay } from "@/lib/ingest";
-import { perBlockScores } from "@/lib/per-block";
+import { perBlockScores, scoreBlock, blockProfiles } from "@/lib/per-block";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+function forecastForBlock(forecast: Forecast, blockId: string): Forecast {
+  const profile = blockProfiles[blockId];
+  if (!profile) return forecast;
+  const points = forecast.points.map((p) => {
+    const block = scoreBlock(p.score, profile, {
+      hour: p.localHour,
+      dayOfWeek: p.inputs?.dayOfWeek ?? 0,
+    });
+    return {
+      ...p,
+      score: block.score,
+      category: block.category,
+    };
+  });
+  let bestTime: Forecast["bestTime"] = null;
+  for (const p of points) {
+    if (bestTime === null || p.score < bestTime.score) {
+      bestTime = { timestamp: p.timestamp, localHour: p.localHour, score: p.score };
+    }
+  }
+  return { ...forecast, points, bestTime };
+}
 
 export default async function HotspotPage({
   params,
@@ -32,22 +55,26 @@ export default async function HotspotPage({
     dayOfWeek: observation.dayOfWeek,
   });
   const block = blockScores[hotspot.blockId];
+  const blockForecast = forecastForBlock(forecast, hotspot.blockId);
 
   const action = actionCopyFor({
     currentScore: block.score,
-    bestTime: forecast.bestTime,
+    bestTime: blockForecast.bestTime,
   });
 
   return (
-    <main className="min-h-dvh bg-[var(--bg-group)] flex justify-center">
-      <div className="w-full max-w-[640px] px-4 sm:px-8 pt-6 sm:pt-12 pb-12 flex flex-col gap-4">
+    <main className="flex min-h-dvh justify-center bg-[var(--bg-group)]">
+      <div className="flex w-full max-w-[760px] flex-col gap-4 px-4 pb-12 pt-6 sm:px-8 sm:pt-10">
         <BackLink href="/" />
 
-        <header className="px-4">
-          <h1 className="display text-[34px] font-bold leading-tight tracking-tight text-[var(--label-primary)]">
+        <header className="border-b border-[var(--separator)] pb-4">
+          <p className="mono mb-1 text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--label-tertiary)]">
+            Block detail
+          </p>
+          <h1 className="text-[28px] font-semibold leading-tight tracking-[-0.01em] text-[var(--label-primary)]">
             {hotspot.name}
           </h1>
-          <p className="text-[13px] text-[var(--label-secondary)] mt-1">
+          <p className="mt-1 text-[13px] text-[var(--label-secondary)]">
             {hotspot.address} · {hotspot.subLabel}
           </p>
         </header>
@@ -62,13 +89,16 @@ export default async function HotspotPage({
         />
 
         <div>
-          <SectionCaption>Next 4 Hours</SectionCaption>
-          <Card>
-            <ForecastChart points={forecast.points} bestTime={forecast.bestTime} />
+          <SectionCaption>{`Next ${blockForecast.windowHours} Hours`}</SectionCaption>
+          <Card className="min-h-[246px]">
+            <ForecastChart
+              points={blockForecast.points}
+              bestTime={blockForecast.bestTime}
+            />
           </Card>
         </div>
 
-        <p className="text-[13px] text-[var(--label-secondary)] px-4 leading-snug">
+        <p className="text-[13px] leading-relaxed text-[var(--label-secondary)]">
           This block score combines the Ave-wide model with nearby anchor
           businesses, curb capacity, time-of-day demand, and side-street relief.
           Phase 3 replaces these heuristics with measured demand.
