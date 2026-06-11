@@ -86,7 +86,7 @@ function conditionLabel(c: WeatherCondition): string {
 }
 
 function trafficLabel(speedRatio: number | null | undefined): string {
-  if (speedRatio == null) return "-";
+  if (speedRatio == null) return "No data";
   if (speedRatio >= 0.9) return "Free flow";
   if (speedRatio >= 0.75) return "Light";
   if (speedRatio >= 0.6) return "Moderate";
@@ -353,7 +353,9 @@ export function ForecastChart({ points, bestTime, onPinChange }: Props) {
   const activePoint = activeIdx != null ? points[activeIdx] : null;
   const sliderIdx = activeIdx ?? 0;
   const sliderPoint = points[sliderIdx];
-  const showBestMarker = activeIdx == null && bestIdx > 0;
+  // Stays mounted while scrubbing (dimmed via the group opacity below) so
+  // the marker the BEST card points at doesn't blink in and out.
+  const showBestMarker = bestIdx > 0;
 
   return (
     <div className="flex flex-col gap-3">
@@ -419,15 +421,34 @@ export function ForecastChart({ points, bestTime, onPinChange }: Props) {
         ))}
 
         {showBestMarker && (
-          <circle
-            className="forecast-best-ring"
-            cx={dotX(bestIdx)}
-            cy={dotY}
-            r={6}
-            fill="none"
-            stroke="var(--label-primary)"
-            strokeWidth={1.5}
-          />
+          <g
+            style={{
+              opacity: activeIdx == null ? 1 : 0.3,
+              transition: "opacity 140ms ease-out",
+            }}
+          >
+            <circle
+              className="forecast-best-ring"
+              cx={dotX(bestIdx)}
+              cy={dotY}
+              r={6}
+              fill="none"
+              stroke="var(--label-primary)"
+              strokeWidth={1.5}
+            />
+            <text
+              x={Math.max(M.l + 12, Math.min(W - M.r - 12, dotX(bestIdx)))}
+              y={barY - 7}
+              fontSize="8.5"
+              fontWeight={600}
+              fontFamily="var(--font-mono), ui-monospace, monospace"
+              fill="var(--label-secondary)"
+              textAnchor="middle"
+              letterSpacing="0.1em"
+            >
+              BEST
+            </text>
+          </g>
         )}
 
         <g className="forecast-scrubber">
@@ -449,7 +470,10 @@ export function ForecastChart({ points, bestTime, onPinChange }: Props) {
             fill="var(--label-primary)"
             stroke="var(--bg-surface)"
             strokeWidth={1.5}
-            style={{ transition: "cx 140ms ease-out" }}
+            // Hidden at rest like the line above — otherwise it sits parked
+            // at NOW and reads as a second, unexplained dot beside the ring.
+            opacity={activeIdx == null ? 0 : 1}
+            style={{ transition: "cx 140ms ease-out, opacity 140ms ease-out" }}
           />
         </g>
 
@@ -521,12 +545,15 @@ function SlotDetail({ point }: { point: Point }) {
             </span>
           )}
           {tempF != null ? (
-            <span className="flex items-baseline gap-1 tabular-nums">
-              <AnimatedNumber value={tempF} />
-              <span>° {conditionText}</span>
+            <span className="flex items-baseline gap-1">
+              <span className="flex items-baseline tabular-nums">
+                <AnimatedNumber value={tempF} />
+                <span>°</span>
+              </span>
+              <span>{conditionText}</span>
             </span>
           ) : (
-            <span>-</span>
+            <span className="text-[var(--label-tertiary)]">No data</span>
           )}
         </div>
       </div>

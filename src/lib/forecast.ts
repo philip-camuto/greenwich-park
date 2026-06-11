@@ -37,6 +37,12 @@ export const FORECAST_STEP_MINUTES = 30;
 export const FORECAST_POINT_COUNT =
   (FORECAST_HOURS * 60) / FORECAST_STEP_MINUTES + 1; // include current = 25
 
+// "Best time" recommendations only consider hours when a trip to the Ave is
+// plausible: errands through dinner. Overnight slots stay in the strip but
+// are never recommended.
+export const BEST_HOUR_START = 8; // 8am
+export const BEST_HOUR_END = 21; // exclusive; last candidate slot is 8:30pm
+
 export type ForecastSlotInputs = {
   weather: WeatherSnapshot;
   traffic: TrafficSnapshot;
@@ -139,10 +145,27 @@ export function weatherForTimestamp(
     condition: match.condition,
     precipitationIn: match.precipitationIn,
     windMph: current.windMph, // hourly doesn't include wind; reuse current
-    isDay: current.isDay, // approximation; good enough for 4-hour horizon
+    isDay: isDaylightHour(localHourOf(at)),
     fetchedAt: current.fetchedAt,
     ok: current.ok,
   };
+}
+
+// Rough daylight bounds for Greenwich CT. Without per-hour is_day data from
+// the hourly feed, this stops night slots from earning the sunny-day boost
+// (the old `isDay: current.isDay` gave midnight a +10 on clear 80F evenings).
+export function isDaylightHour(localHour: number): boolean {
+  return localHour >= 7 && localHour <= 19;
+}
+
+function localHourOf(at: Date): number {
+  return Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: GREENWICH_TZ,
+      hour: "numeric",
+      hour12: false,
+    }).format(at),
+  );
 }
 
 export function buildForecast({
@@ -166,8 +189,14 @@ export function buildForecast({
   const points: ForecastPoint[] = [];
   const events = aggregatedEvents ?? [];
 
+  // Slot 0 is the literal "now"; later slots snap to the half-hour grid so
+  // recommended times read "5:30 PM", not "5:09 PM" load-time precision.
+  const stepMs = FORECAST_STEP_MINUTES * 60 * 1000;
+  let gridStart = Math.ceil(now.getTime() / stepMs) * stepMs;
+  if (gridStart === now.getTime()) gridStart += stepMs;
+
   for (let i = 0; i < FORECAST_POINT_COUNT; i++) {
-    const t = new Date(now.getTime() + i * FORECAST_STEP_MINUTES * 60 * 1000);
+    const t = i === 0 ? now : new Date(gridStart + (i - 1) * stepMs);
     const time = computeTimeFeatures(t);
     const weather = weatherForTimestamp(t, idx, currentWeather);
     const slotTraffic = projectTraffic(
@@ -204,9 +233,15 @@ export function buildForecast({
     });
   }
 
-  // Best time = lowest demand inside the window. Tie-break to earliest.
+  // Best time = lowest demand inside the window, restricted to hours when
+  // going to the Ave makes sense (8am-9pm). Without the restriction any
+  // window crossing midnight recommends ~2am, because overnight priors
+  // bottom out at 5 while everything is closed. Tie-break to earliest.
+  // If nothing qualifies (or now is already the best), bestTime stays null /
+  // now and the BEST card hides itself.
   let bestTime: Forecast["bestTime"] = null;
   for (const p of points) {
+    if (p.localHour < BEST_HOUR_START || p.localHour >= BEST_HOUR_END) continue;
     if (bestTime === null || p.score < bestTime.score) {
       bestTime = { timestamp: p.timestamp, localHour: p.localHour, score: p.score };
     }

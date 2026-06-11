@@ -24,7 +24,7 @@ export default function Error({
             No signal
           </h1>
           <p className="mt-2 text-[15px] leading-relaxed text-[var(--label-secondary)]">
-            We couldn&rsquo;t reach our data sources just now. Public APIs occasionally hiccup.
+            We couldn&apos;t reach our data sources just now. Public APIs occasionally hiccup.
           </p>
           <button
             type="button"

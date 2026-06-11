@@ -2,9 +2,25 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://parking.philipcamuto.com"),
   title: "Greenwich Parking",
   description:
     "Live Greenwich Avenue parking demand, block scores, and arrival planning.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    title: "Greenwich Parking",
+    description:
+      "Live Greenwich Avenue parking demand, block scores, and arrival planning.",
+    url: "https://parking.philipcamuto.com",
+    siteName: "Greenwich Parking",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Greenwich Parking",
+    description:
+      "Live Greenwich Avenue parking demand, block scores, and arrival planning.",
+  },
   appleWebApp: {
     capable: true,
     title: "Greenwich Parking",

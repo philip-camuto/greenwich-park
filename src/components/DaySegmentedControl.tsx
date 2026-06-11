@@ -152,18 +152,25 @@ export function DaySegmentedControl() {
           {customLabel ?? "Another date"}
         </button>
 
-        <span aria-hidden className="px-1 text-[12px] text-[var(--label-tertiary)]">
-          at
-        </span>
-
-        <input
-          type="time"
-          aria-label="Time of day"
-          value={currentTime}
-          onChange={(e) => selectTime(e.target.value)}
-          onInput={(e) => selectTime(e.currentTarget.value)}
-          className="mono min-h-[32px] rounded-[6px] bg-[var(--bg-elevated)] px-2.5 text-[13px] font-medium text-[var(--label-primary)] outline-none"
-        />
+        {/* The empty native time input renders a raw "--:-- --" placeholder,
+            which looks broken next to "Today" (today's time comes from the
+            forecast scrubber anyway). Only show it once a custom date or
+            time is in play. */}
+        {(current !== "today" || currentTime) && (
+          <>
+            <span aria-hidden className="px-1 text-[12px] text-[var(--label-tertiary)]">
+              at
+            </span>
+            <input
+              type="time"
+              aria-label="Time of day"
+              value={currentTime}
+              onChange={(e) => selectTime(e.target.value)}
+              onInput={(e) => selectTime(e.currentTarget.value)}
+              className="mono min-h-[32px] rounded-[6px] bg-[var(--bg-elevated)] px-2.5 text-[13px] font-medium text-[var(--label-primary)] outline-none"
+            />
+          </>
+        )}
         {currentTime && (
           <button
             type="button"
@@ -238,7 +245,7 @@ function plannerLabel(day: string, time: string): string {
             month: "short",
             day: "numeric",
           });
-  return time ? `${dayLabel} · ${formatTime(time)}` : dayLabel;
+  return time ? `${dayLabel}, ${formatTime(time)}` : dayLabel;
 }
 
 function formatTime(time: string): string {

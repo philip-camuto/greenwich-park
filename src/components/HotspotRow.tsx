@@ -17,8 +17,10 @@ const ACCENT: Record<DemandCategory, string> = {
   red: "var(--state-tough)",
 };
 
-export function HotspotRow({ id, name, subLabel, score, category, reasons }: Props) {
-  const reason = reasons?.[0] ?? "block demand model";
+export function HotspotRow({ id, name, subLabel, score, category }: Props) {
+  // The anchor reason is intentionally NOT shown here: it starts with the
+  // row's own name ("The Ginger Man + upper Ave..."), so on phones it
+  // truncated into a stutter. It lives on the detail page instead.
   return (
     <Link
       href={`/hotspot/${id}`}
@@ -30,7 +32,7 @@ export function HotspotRow({ id, name, subLabel, score, category, reasons }: Pro
           {name}
         </span>
         <span className="mt-0.5 block truncate text-[12px] text-[var(--label-tertiary)]">
-          {subLabel} · {reason}
+          {subLabel}
         </span>
       </span>
       <span className="flex items-center gap-2">

@@ -75,7 +75,7 @@ export default async function HotspotPage({
             {hotspot.name}
           </h1>
           <p className="mt-1 text-[13px] text-[var(--label-secondary)]">
-            {hotspot.address} · {hotspot.subLabel}
+            {hotspot.address}, {hotspot.subLabel}
           </p>
         </header>
 

@@ -159,14 +159,27 @@ function scheduleRefresh(): void {
   });
 }
 
-// On-demand pattern: read latest; if stale or missing, write a new one.
-// This is what /api/demand/current hits.
+// On-demand pattern: read latest; if stale or missing, refresh. This is what
+// /api/demand/current hits.
+//
+// Stale-but-displayable rows are served immediately and refreshed AFTER the
+// response (scheduleRefresh) rather than inline. Two reasons:
+//   1. The visitor isn't held hostage by six upstream fetches.
+//   2. Inline refreshes ran concurrently with the page render's own source
+//      fetches on a cold instance, and that contention produced observations
+//      where every input was marked failed (the June 2026 "running blind"
+//      incident). Post-response, the instance is otherwise idle.
+// Only a missing or too-old-to-display row blocks on a synchronous ingest.
 export async function getOrRefreshObservation(): Promise<{
   observation: Observation;
   refreshed: boolean;
 }> {
   const latest = await getLatestObservation();
   if (latest && !isStale(latest)) {
+    return { observation: latest, refreshed: false };
+  }
+  if (latest && !isTooOldForDisplay(latest)) {
+    scheduleRefresh();
     return { observation: latest, refreshed: false };
   }
   const fresh = await runIngest();

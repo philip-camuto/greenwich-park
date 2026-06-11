@@ -39,7 +39,9 @@ describe("ForecastChart", () => {
 
   it("shows a 'Best' pill when the best slot is not the current one", () => {
     render(<ForecastChart points={points} bestTime={bestTime} />);
-    expect(screen.getByText(/^best$/i)).toBeInTheDocument();
+    // Two matches by design: the card pill and the BEST microlabel on the
+    // track that ties the ring to the card.
+    expect(screen.getAllByText(/^best$/i).length).toBeGreaterThanOrEqual(1);
     // Best slot is i=18 → 09:00 UTC → "5:00 AM" Greenwich. The pill renders it.
     expect(screen.getAllByText(/5:00 AM/).length).toBeGreaterThanOrEqual(1);
   });
@@ -72,15 +74,21 @@ describe("ForecastChart", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("removes the best marker from the track once a time is selected", () => {
+  it("keeps the best marker mounted but dimmed once a time is selected", () => {
     const { container } = render(<ForecastChart points={points} bestTime={bestTime} />);
-    expect(container.querySelector(".forecast-best-ring")).toBeInTheDocument();
+    const ringGroup = () =>
+      container.querySelector(".forecast-best-ring")?.parentElement;
+    expect(ringGroup()).toBeTruthy();
+    expect(ringGroup()?.style.opacity).toBe("1");
 
     fireEvent.keyDown(
       screen.getByRole("slider", { name: /demand forecast/i }),
       { key: "ArrowRight" },
     );
 
-    expect(container.querySelector(".forecast-best-ring")).not.toBeInTheDocument();
+    // Dimmed, not unmounted: the marker the BEST card refers to should not
+    // blink out exactly when the user is exploring the strip.
+    expect(ringGroup()).toBeTruthy();
+    expect(Number(ringGroup()?.style.opacity)).toBeLessThan(1);
   });
 });

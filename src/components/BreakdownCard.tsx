@@ -40,6 +40,16 @@ export function BreakdownCard({ initialView, forecastPoints }: Props) {
     .filter((r) => r.mod !== 0)
     .sort((a, b) => Math.abs(b.mod) - Math.abs(a.mod));
   const quiet = view.rows.filter((r) => r.mod === 0);
+  // "Held the line" implies the signal reported and was neutral. A signal
+  // whose fetch failed did neither; say so instead of claiming it held.
+  const downCount = quiet.filter((r) => r.reason === "data unavailable").length;
+  const heldCount = quiet.length - downCount;
+  const quietSummary =
+    downCount === 0
+      ? `${heldCount} signal${heldCount === 1 ? "" : "s"} held the line`
+      : heldCount === 0
+        ? `${downCount} signal${downCount === 1 ? "" : "s"} unavailable`
+        : `${heldCount} held the line, ${downCount} unavailable`;
 
   return (
     <div>
@@ -50,7 +60,7 @@ export function BreakdownCard({ initialView, forecastPoints }: Props) {
         <div className="flex flex-col gap-1">
           <div className="flex items-baseline justify-between gap-3">
             <span className="text-[13px] text-[var(--label-secondary)]">
-              Baseline · {dow} at {hourLabel(view.hour)}
+              Baseline: {dow} at {hourLabel(view.hour)}
             </span>
             <span className="mono text-[20px] font-semibold tabular-nums text-[var(--label-primary)]">
               {view.baseline}
@@ -72,7 +82,7 @@ export function BreakdownCard({ initialView, forecastPoints }: Props) {
         {quiet.length > 0 && (
           <details className="border-t border-[var(--separator)] pt-3">
             <summary className="cursor-pointer list-none text-[13px] font-medium text-[var(--label-secondary)]">
-              {quiet.length} signal{quiet.length === 1 ? "" : "s"} held the line
+              {quietSummary}
               <span aria-hidden className="ml-1">›</span>
             </summary>
             <ul className="mt-3 flex flex-col gap-3">

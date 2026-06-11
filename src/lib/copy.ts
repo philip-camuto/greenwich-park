@@ -1,7 +1,9 @@
 import type { DemandCategory } from "@/lib/model/types";
 import { GREENWICH_TZ } from "@/lib/utils/time";
 
-const FALLBACK_COPY = "Won't get much easier in the next 4 hours.";
+// Keep the window wording in sync with FORECAST_HOURS in lib/forecast.ts
+// (not imported: that module pulls server-side fetch code into the bundle).
+const FALLBACK_COPY = "Won't get much easier in the next 12 hours.";
 
 export function verdictFor(category: DemandCategory): string {
   switch (category) {
