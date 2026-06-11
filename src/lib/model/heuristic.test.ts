@@ -163,8 +163,8 @@ describe("schoolModifier", () => {
 
 describe("computeDemand integration", () => {
   it("Saturday 1pm clear 70F yields red", () => {
-    const out = computeDemand(input()); // base 95 + clear/65F +5 = 100
-    expect(out.score).toBe(100);
+    const out = computeDemand(input()); // base 93 + clear/65F +5 = 98
+    expect(out.score).toBe(98);
     expect(out.category).toBe("red");
     expect(out.confidence).toBe("high");
   });

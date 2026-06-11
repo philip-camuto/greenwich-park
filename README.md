@@ -10,7 +10,7 @@ Live: https://parking.philipcamuto.com
 
 Phase 1 is a **demand indicator**, not a parking finder. There is no live occupancy data yet. The score (0-100) is computed from:
 
-- a hardcoded prior matrix calibrated by a frequent local user (the dominant signal)
+- a hardcoded prior matrix, hand-calibrated by a frequent local user and recalibrated against 21,892 FOIA'd parking citations (2022-2024) inside the 9am-4pm Mon-Sat enforcement window — see [docs/citations-recalibration.md](docs/citations-recalibration.md)
 - live weather from Open-Meteo
 - live I-95 event feed from CTDOT 511
 - live traffic flow from TomTom (preferred over CT 511 when available)
@@ -123,7 +123,7 @@ src/
       townICal.ts                  Town of Greenwich iCal
       events.ts                    Aggregates Eventbrite + Ticketmaster + iCal
       timeFeatures.ts              tz-aware hour/dow/holiday/school
-      citations.ts                 Phase 3 FOIA stub
+      citations.ts                 FOIA citations (historical, in citations_raw; priors recalibrated)
       parkMobile.ts                Phase 3 partnership stub
       cameraFeed.ts                Phase 4 Pi/YOLO stub
     model/
@@ -178,7 +178,7 @@ The `observations_by_zone` table in [`src/lib/db/schema.ts`](src/lib/db/schema.t
 | --- | --- | --- |
 | 1 | this build | Public signals + heuristic. Live now. |
 | 2 | next | 12-month historical backfill. Trained model replaces `heuristic.ts` wholesale, same `ModelInput` shape. |
-| 3 | pending FOIA | `citations.ts` + `parkMobile.ts` feed real demand proxies. |
+| 3 | FOIA data received 2026-06-11 | 21,892 citations (2022-2024) in `citations_raw`; priors recalibrated for the enforcement window. No live feed exists — `parkMobile.ts` still pending for real-time proxies. |
 | 4 | pending Greenwich Parking Svcs | `cameraFeed.ts` Raspberry Pi YOLO ground truth replaces priors. |
 
 ## Honest framing

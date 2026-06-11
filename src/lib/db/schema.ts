@@ -91,3 +91,25 @@ export const observationsByZone = pgTable("observations_by_zone", {
 
 export type ObservationByZone = typeof observationsByZone.$inferSelect;
 export type NewObservationByZone = typeof observationsByZone.$inferInsert;
+
+// FOIA parking citations from Greenwich Parking Services (received
+// 2026-06-11): 21,892 tickets on Lower/Upper Greenwich Ave, Jan 2022 -
+// Dec 2024. One-time historical dump, not a live feed — used offline to
+// recalibrate priors (analysis/recalibrate_priors.py) and as future
+// training data, not at request time. Street: LGA = Lower Greenwich Ave,
+// UGA = Upper, HW = handwritten tickets ("GREENWICH AVENUE").
+export const citationsRaw = pgTable("citations_raw", {
+  id: serial("id").primaryKey(),
+  citationNumber: text("citation_number").notNull().unique(),
+  issuedAt: timestamp("issued_at", { withTimezone: true }).notNull(),
+  street: text("street").notNull(), // LGA | UGA | HW
+  officer: text("officer"), // nickname e.g. PS007; "999" is a shared/system ID
+  zone: text("zone"),
+  zoneName: text("zone_name"),
+  violationType: text("violation_type"),
+  baseAmount: real("base_amount"),
+  sourceFile: text("source_file"),
+});
+
+export type CitationRaw = typeof citationsRaw.$inferSelect;
+export type NewCitationRaw = typeof citationsRaw.$inferInsert;
