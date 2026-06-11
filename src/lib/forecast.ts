@@ -22,20 +22,20 @@ import {
 import { computeTimeFeatures } from "@/lib/sources/timeFeatures";
 import { GREENWICH_TZ } from "@/lib/utils/time";
 
-// 4-hour rolling forecast in 15-min increments. We re-run the same heuristic
+// 12-hour rolling forecast in 30-min increments. We re-run the same heuristic
 // for each future timestamp, swapping in:
 //   - time features computed in Greenwich-local time at that timestamp
 //     (handles midnight/holiday/school boundaries automatically)
 //   - the matching hourly weather slice from Open-Meteo
 //   - current traffic snapshot (no traffic forecast is available)
 //
-// PRD specifies 4-hour horizon explicitly because compounding error past
-// that window makes the curve untrustworthy.
+// The longer horizon supports lunch/dinner planning while keeping the
+// interaction compact enough to scan.
 
-export const FORECAST_HOURS = 4;
-export const FORECAST_STEP_MINUTES = 15;
+export const FORECAST_HOURS = 12;
+export const FORECAST_STEP_MINUTES = 30;
 export const FORECAST_POINT_COUNT =
-  (FORECAST_HOURS * 60) / FORECAST_STEP_MINUTES + 1; // include current = 17
+  (FORECAST_HOURS * 60) / FORECAST_STEP_MINUTES + 1; // include current = 25
 
 export type ForecastSlotInputs = {
   weather: WeatherSnapshot;

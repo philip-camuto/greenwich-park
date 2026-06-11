@@ -1,36 +1,22 @@
-import { AvenueMap } from "@/components/AvenueMap";
 import { BreakdownCard } from "@/components/BreakdownCard";
 import { Card } from "@/components/Card";
+import { BlockHotspots, BlockMap } from "@/components/BlockIntelligence";
 import { DaySegmentedControl } from "@/components/DaySegmentedControl";
-import { ForecastChart } from "@/components/ForecastChart";
-import { HotspotList } from "@/components/HotspotList";
-import { ScoreCard } from "@/components/ScoreCard";
+import { DemandScrubProvider } from "@/components/DemandScrubProvider";
+import { DemandSection } from "@/components/DemandSection";
 import { SectionCaption } from "@/components/SectionCaption";
 import {
   breakdownViewFromForecastPoint,
   breakdownViewFromObservation,
 } from "@/lib/breakdown-view";
-import { actionCopyFor, verdictFor } from "@/lib/copy";
 import { parseDayParam } from "@/lib/day-param";
 import { buildForecastForGreenwich } from "@/lib/forecast";
 import { getObservationForDisplay } from "@/lib/ingest";
-import { perBlockScores } from "@/lib/per-block";
 import type { DemandCategory } from "@/lib/model/types";
 import { GREENWICH_TZ } from "@/lib/utils/time";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
-
-function titleSubtitle(at: Date | string): string {
-  const d = typeof at === "string" ? new Date(at) : at;
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: GREENWICH_TZ,
-    weekday: "short",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(d);
-}
 
 function blockContext(at: Date | string): { hour: number; dayOfWeek: number } {
   const d = typeof at === "string" ? new Date(at) : at;
@@ -53,8 +39,9 @@ function blockContext(at: Date | string): { hour: number; dayOfWeek: number } {
     Fri: 5,
     Sat: 6,
   };
+  const parsedHour = parseInt(parts.hour ?? "0", 10);
   return {
-    hour: parseInt(parts.hour ?? "0", 10),
+    hour: parsedHour === 24 ? 0 : parsedHour,
     dayOfWeek: dayMap[parts.weekday ?? "Sun"] ?? 0,
   };
 }
@@ -91,11 +78,10 @@ export default async function Home({
     displayedAt = dayParam.startAt;
   }
 
-  const blockScores = perBlockScores(globalScore, blockContext(displayedAt));
-  const action = actionCopyFor({
-    currentScore: globalScore,
-    bestTime: forecast.bestTime,
-  });
+  const initialModeledAt =
+    typeof displayedAt === "string"
+      ? displayedAt
+      : displayedAt.toISOString();
 
   // Breakdown view: today renders straight from the persisted observation;
   // a future-date selection renders from the first forecast slot, which we
@@ -105,44 +91,45 @@ export default async function Home({
       ? breakdownViewFromObservation(observation)
       : breakdownViewFromForecastPoint(forecast.points[0]);
 
+  const scrubResetKey = forecast.points[0]?.timestamp ?? initialModeledAt;
+  const initialBlockContext = blockContext(displayedAt);
+
   return (
+    <DemandScrubProvider key={scrubResetKey}>
     <main className="min-h-dvh bg-[var(--bg-group)]">
-      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-5 px-4 pb-10 pt-6 sm:px-8 sm:pt-10 lg:grid lg:grid-cols-[minmax(0,1fr)_390px] lg:gap-6 lg:px-10 lg:pb-14">
-        <header className="px-4 lg:col-span-2 lg:flex lg:items-end lg:justify-between lg:px-0">
-          <h1 className="display max-w-[720px] text-[34px] font-bold leading-tight tracking-tight text-[var(--label-primary)] lg:text-[56px]">
-            Parking on Greenwich Avenue
-          </h1>
-          <p className="mt-1 text-[13px] text-[var(--label-secondary)] lg:mb-2 lg:text-right lg:text-[15px]">
-            Greenwich · CT · {titleSubtitle(displayedAt)}
-          </p>
+      <div className="mx-auto flex w-full max-w-[1480px] flex-col gap-4 px-4 pb-8 pt-4 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-6 lg:px-8 lg:pb-10 xl:gap-8 xl:px-12">
+        <header className="flex flex-col gap-3 border-b border-[var(--separator)] pb-4 lg:col-span-2 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="mono mb-1 text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--label-tertiary)]">
+              Live curb intelligence
+            </p>
+            <h1 className="text-[24px] font-semibold leading-tight tracking-[-0.01em] text-[var(--label-primary)] lg:text-[30px]">
+              Greenwich Parking
+            </h1>
+          </div>
+          <div className="flex flex-col gap-3 lg:items-end">
+            <DaySegmentedControl />
+          </div>
         </header>
 
-        <div className="lg:col-span-2 lg:max-w-[520px]">
-          <DaySegmentedControl />
-        </div>
-
-        <section className="flex flex-col gap-5 lg:gap-6">
-          <ScoreCard
-            score={globalScore}
-            category={category}
-            confidence={confidence}
-            actionCopy={action}
+        <section className="flex flex-col gap-4">
+          <DemandSection
+            key={forecast.points[0]?.timestamp ?? "empty"}
+            initialScore={globalScore}
+            initialCategory={category}
+            initialConfidence={confidence}
+            initialModeledAt={initialModeledAt}
+            forecast={forecast}
           />
 
           <div>
-            <SectionCaption>Next 4 Hours</SectionCaption>
-            <Card className="min-h-[268px] lg:px-6 lg:py-5">
-              <ForecastChart
-                points={forecast.points}
-                bestTime={forecast.bestTime}
-              />
-            </Card>
-          </div>
-
-          <div>
             <SectionCaption>Hotspots</SectionCaption>
-            <HotspotList perBlock={blockScores} />
-            <p className="mt-2 px-4 text-[13px] leading-snug text-[var(--label-secondary)] lg:px-0">
+            <BlockHotspots
+              initialScore={globalScore}
+              initialContext={initialBlockContext}
+              forecastPoints={forecast.points}
+            />
+            <p className="mt-2 text-[12px] leading-relaxed text-[var(--label-tertiary)]">
               Block scores combine anchor businesses, curb capacity, time of
               day, and side-street relief. Phase 3 will replace the heuristics
               with measured demand.
@@ -153,23 +140,29 @@ export default async function Home({
         <aside className="flex flex-col gap-5 lg:sticky lg:top-8 lg:self-start">
           <div>
             <SectionCaption>Greenwich Avenue</SectionCaption>
-            <Card className="min-h-[560px] lg:px-6 lg:py-6">
-              <AvenueMap
+            <Card className="min-h-[520px] lg:px-5 lg:py-5">
+              <BlockMap
                 category={category}
-                perBlock={blockScores}
-                score={globalScore}
-                verdict={verdictFor(category)}
+                initialScore={globalScore}
+                initialContext={initialBlockContext}
+                forecastPoints={forecast.points}
               />
             </Card>
           </div>
 
-          {breakdownView && <BreakdownCard view={breakdownView} />}
+          {breakdownView && (
+            <BreakdownCard
+              initialView={breakdownView}
+              forecastPoints={forecast.points}
+            />
+          )}
         </aside>
 
-        <footer className="px-4 text-[13px] leading-relaxed text-[var(--label-tertiary)] lg:col-span-2 lg:px-0">
+        <footer className="mono border-t border-[var(--separator)] pt-4 text-[11px] leading-relaxed text-[var(--label-tertiary)] lg:col-span-2">
           Public data + heuristics. Not a guarantee of availability.
         </footer>
       </div>
     </main>
+    </DemandScrubProvider>
   );
 }

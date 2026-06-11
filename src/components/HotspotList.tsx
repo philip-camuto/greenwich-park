@@ -9,7 +9,7 @@ type Props = {
 
 export function HotspotList({ perBlock }: Props) {
   return (
-    <Card>
+    <Card className="py-1">
       <ul className="flex flex-col">
         {HOTSPOTS.map((h, i) => {
           const block = perBlock[h.blockId];

@@ -3,8 +3,10 @@ import { GREENWICH_TZ } from "@/lib/utils/time";
 export type DayParam =
   | { kind: "today" }
   | { kind: "future"; startAt: Date; isoDate: string; time?: string };
-
-const MAX_FUTURE_DAYS = 7;
+// Date navigation is unbounded both directions. Past dates fall back to the
+// base-prior model with no live signals (weather/traffic/etc are not
+// time-machine APIs); far-future dates outside Open-Meteo's 7-day window
+// gracefully drop the hourly weather to current snapshot, which is fine.
 
 function greenwichLocalYMD(at: Date): string {
   const parts = Object.fromEntries(
@@ -84,13 +86,8 @@ export function parseDayParam(
   }
 
   const todayISO = greenwichLocalYMD(now);
-  if (isoDate < todayISO) return { kind: "today" };
+  // "today" with no specified time renders the live observation, not a forecast.
   if (isoDate === todayISO && !requestedTime) return { kind: "today" };
-
-  const max = new Date(`${todayISO}T12:00:00.000Z`);
-  max.setUTCDate(max.getUTCDate() + MAX_FUTURE_DAYS);
-  const maxISO = greenwichLocalYMD(max);
-  if (isoDate > maxISO) return { kind: "today" };
 
   const startAt = requestedTime
     ? greenwichLocalTimeOnDate(isoDate, requestedTime)

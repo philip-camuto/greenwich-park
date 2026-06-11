@@ -2,7 +2,7 @@ type Props = { children: string };
 
 export function SectionCaption({ children }: Props) {
   return (
-    <div className="display mb-2 px-4 text-[13px] font-semibold uppercase tracking-[0.06em] text-[var(--label-secondary)] lg:px-0">
+    <div className="mono mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--label-tertiary)]">
       {children}
     </div>
   );

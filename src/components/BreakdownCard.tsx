@@ -1,7 +1,20 @@
-import { Card } from "./Card";
-import type { BreakdownRow, BreakdownView } from "@/lib/breakdown-view";
+"use client";
 
-type Props = { view: BreakdownView };
+import { Card } from "./Card";
+import { useScrubState } from "./DemandScrubProvider";
+import {
+  breakdownViewFromForecastPoint,
+  type BreakdownRow,
+  type BreakdownView,
+} from "@/lib/breakdown-view";
+import type { ForecastPoint } from "@/lib/forecast";
+
+type Props = {
+  // Rendered when no scrub is active (initial load, or pin cleared).
+  initialView: BreakdownView;
+  // Used to derive a fresh BreakdownView for whichever slot the user pins.
+  forecastPoints: ForecastPoint[];
+};
 
 const DOW_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -12,7 +25,16 @@ function hourLabel(h: number): string {
   return `${h} AM`;
 }
 
-export function BreakdownCard({ view }: Props) {
+export function BreakdownCard({ initialView, forecastPoints }: Props) {
+  const { pinnedIdx } = useScrubState();
+  // Pin at idx 0 means "Now" — keep the more-accurate initialView (which on
+  // "today" comes from the live observation, not the forecast model).
+  const pinnedPoint =
+    pinnedIdx != null && pinnedIdx > 0 ? forecastPoints[pinnedIdx] : null;
+  const view =
+    (pinnedPoint && breakdownViewFromForecastPoint(pinnedPoint)) ??
+    initialView;
+
   const dow = DOW_NAMES[view.dayOfWeek] ?? "?";
   const movers = view.rows
     .filter((r) => r.mod !== 0)
@@ -21,16 +43,16 @@ export function BreakdownCard({ view }: Props) {
 
   return (
     <div>
-      <div className="display mb-2 px-4 text-[13px] font-semibold uppercase tracking-[0.06em] text-[var(--label-secondary)] lg:px-0">
+      <div className="mono mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--label-tertiary)]">
         What goes into this score
       </div>
-      <Card className="flex flex-col gap-4 lg:px-6 lg:py-5">
+      <Card className="flex flex-col gap-4 lg:px-5 lg:py-5">
         <div className="flex flex-col gap-1">
           <div className="flex items-baseline justify-between gap-3">
-            <span className="text-[14px] text-[var(--label-secondary)]">
+            <span className="text-[13px] text-[var(--label-secondary)]">
               Baseline · {dow} at {hourLabel(view.hour)}
             </span>
-            <span className="display text-[22px] font-semibold tabular-nums text-[var(--label-primary)]">
+            <span className="mono text-[20px] font-semibold tabular-nums text-[var(--label-primary)]">
               {view.baseline}
             </span>
           </div>
@@ -62,14 +84,14 @@ export function BreakdownCard({ view }: Props) {
         )}
 
         <div className="flex items-baseline justify-between gap-3 border-t border-[var(--separator)] pt-3">
-          <span className="text-[14px] text-[var(--label-secondary)]">
+          <span className="text-[13px] text-[var(--label-secondary)]">
             {view.closureCapped
               ? "Score (closure-capped at 20)"
               : view.when === "future"
                 ? "Projected score"
                 : "Score"}
           </span>
-          <span className="display text-[28px] font-semibold tabular-nums text-[var(--label-primary)]">
+          <span className="mono text-[26px] font-semibold tabular-nums text-[var(--label-primary)]">
             {view.score}
           </span>
         </div>
@@ -95,7 +117,7 @@ function Row({
     <li className="flex items-baseline justify-between gap-3">
       <div className="flex flex-col">
         <span
-          className={`text-[14px] font-medium ${
+          className={`text-[13px] font-medium ${
             muted ? "text-[var(--label-secondary)]" : "text-[var(--label-primary)]"
           }`}
         >
@@ -103,9 +125,7 @@ function Row({
         </span>
         <span className="text-[13px] text-[var(--label-tertiary)]">{reason}</span>
       </div>
-      <span
-        className={`display text-[18px] font-semibold tabular-nums ${moverClass}`}
-      >
+      <span className={`mono text-[16px] font-semibold tabular-nums ${moverClass}`}>
         {muted ? "0" : `${sign}${magnitude}`}
       </span>
     </li>

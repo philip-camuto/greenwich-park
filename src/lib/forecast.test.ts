@@ -82,12 +82,12 @@ describe("buildForecast", () => {
     { timestamp: "2026-05-09T16:00", tempF: 78, condition: "clear", precipitationIn: 0 },
   ];
 
-  it("produces 17 points spanning 4 hours in 15-min steps", () => {
+  it("produces 25 points spanning 12 hours in 30-min steps", () => {
     const f = buildForecast({ now, currentWeather: w(), traffic: tr(), hourly });
     expect(f.points).toHaveLength(FORECAST_POINT_COUNT);
-    expect(f.points).toHaveLength(17);
-    expect(f.stepMinutes).toBe(15);
-    expect(f.windowHours).toBe(4);
+    expect(f.points).toHaveLength(25);
+    expect(f.stepMinutes).toBe(30);
+    expect(f.windowHours).toBe(12);
   });
 
   it("timestamps are strictly increasing", () => {
@@ -128,7 +128,7 @@ describe("buildForecast", () => {
       traffic: tr(),
       hourly: [],
     });
-    expect(f.points).toHaveLength(17);
+    expect(f.points).toHaveLength(25);
     // All points should still have valid scores (no NaN, no crash).
     for (const p of f.points) {
       expect(Number.isFinite(p.score)).toBe(true);
@@ -152,10 +152,10 @@ describe("buildForecast (future startAt)", () => {
     const f = buildForecast({ now: futureStart, currentWeather: w(), traffic: tr(), hourly });
     expect(f.points[0].timestamp).toBe(futureStart.toISOString());
   });
-  it("walks 15 minutes per step", () => {
+  it("walks 30 minutes per step", () => {
     const f = buildForecast({ now: futureStart, currentWeather: w(), traffic: tr(), hourly });
     const delta =
       new Date(f.points[1].timestamp).getTime() - new Date(f.points[0].timestamp).getTime();
-    expect(delta).toBe(15 * 60 * 1000);
+    expect(delta).toBe(30 * 60 * 1000);
   });
 });

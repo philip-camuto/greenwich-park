@@ -2,17 +2,21 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Parking on Greenwich Avenue",
-  description: "Shows you when Greenwich Avenue is busy before you drive there.",
+  title: "Greenwich Parking",
+  description:
+    "Live Greenwich Avenue parking demand, block scores, and arrival planning.",
   appleWebApp: {
     capable: true,
-    title: "Greenwich Ave",
+    title: "Greenwich Parking",
     statusBarStyle: "default",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f2f2f7",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
+    { media: "(prefers-color-scheme: dark)", color: "#050505" },
+  ],
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
