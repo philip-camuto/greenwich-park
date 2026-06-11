@@ -43,6 +43,27 @@ export const FORECAST_POINT_COUNT =
 export const BEST_HOUR_START = 8; // 8am
 export const BEST_HOUR_END = 21; // exclusive; last candidate slot is 8:30pm
 
+// Lowest demand inside [startHour, endHour). Without an hour restriction any
+// window crossing midnight recommends ~2am, because overnight priors bottom
+// out at 5 while everything is closed. Tie-break to earliest. Returns null
+// when no slot qualifies (e.g. a hotspot already closed for the rest of the
+// window) — the BEST card hides itself. Hotspot pages pass the anchor
+// business's own opening hours.
+export function bestTimeWithin(
+  points: ForecastPoint[],
+  startHour: number = BEST_HOUR_START,
+  endHour: number = BEST_HOUR_END,
+): Forecast["bestTime"] {
+  let best: Forecast["bestTime"] = null;
+  for (const p of points) {
+    if (p.localHour < startHour || p.localHour >= endHour) continue;
+    if (best === null || p.score < best.score) {
+      best = { timestamp: p.timestamp, localHour: p.localHour, score: p.score };
+    }
+  }
+  return best;
+}
+
 export type ForecastSlotInputs = {
   weather: WeatherSnapshot;
   traffic: TrafficSnapshot;
@@ -233,19 +254,7 @@ export function buildForecast({
     });
   }
 
-  // Best time = lowest demand inside the window, restricted to hours when
-  // going to the Ave makes sense (8am-9pm). Without the restriction any
-  // window crossing midnight recommends ~2am, because overnight priors
-  // bottom out at 5 while everything is closed. Tie-break to earliest.
-  // If nothing qualifies (or now is already the best), bestTime stays null /
-  // now and the BEST card hides itself.
-  let bestTime: Forecast["bestTime"] = null;
-  for (const p of points) {
-    if (p.localHour < BEST_HOUR_START || p.localHour >= BEST_HOUR_END) continue;
-    if (bestTime === null || p.score < bestTime.score) {
-      bestTime = { timestamp: p.timestamp, localHour: p.localHour, score: p.score };
-    }
-  }
+  const bestTime = bestTimeWithin(points);
 
   return {
     generatedAt: now.toISOString(),
