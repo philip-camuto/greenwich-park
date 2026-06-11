@@ -5,6 +5,8 @@ import {
   FORECAST_POINT_COUNT,
   indexHourly,
   weatherForTimestamp,
+  BEST_HOUR_START,
+  BEST_HOUR_END,
 } from "./forecast";
 import type {
   HourlyForecastPoint,
@@ -99,10 +101,33 @@ describe("buildForecast", () => {
     }
   });
 
-  it("bestTime is the lowest-score point in the window", () => {
+  it("bestTime is the lowest-score point within recommendable hours (8am-9pm)", () => {
     const f = buildForecast({ now, currentWeather: w(), traffic: tr(), hourly });
-    const minScore = Math.min(...f.points.map((p) => p.score));
+    const candidates = f.points.filter(
+      (p) => p.localHour >= BEST_HOUR_START && p.localHour < BEST_HOUR_END,
+    );
+    const minScore = Math.min(...candidates.map((p) => p.score));
     expect(f.bestTime?.score).toBe(minScore);
+  });
+
+  it("never recommends an overnight best time, even when overnight is the global minimum", () => {
+    // Sat noon + 12h crosses midnight; overnight priors (~5) are the global
+    // minimum, but a 2am parking recommendation is useless.
+    const f = buildForecast({ now, currentWeather: w(), traffic: tr(), hourly });
+    expect(f.bestTime).not.toBeNull();
+    expect(f.bestTime!.localHour).toBeGreaterThanOrEqual(BEST_HOUR_START);
+    expect(f.bestTime!.localHour).toBeLessThan(BEST_HOUR_END);
+  });
+
+  it("snaps every slot after the first to the half-hour grid", () => {
+    const offGrid = new Date("2026-05-09T16:09:23Z"); // 12:09:23pm ET
+    const f = buildForecast({ now: offGrid, currentWeather: w(), traffic: tr(), hourly });
+    expect(f.points[0].timestamp).toBe(offGrid.toISOString());
+    for (const pt of f.points.slice(1)) {
+      const d = new Date(pt.timestamp);
+      expect(d.getUTCMinutes() % 30).toBe(0);
+      expect(d.getUTCSeconds()).toBe(0);
+    }
   });
 
   it("rain forecast pulls scores down", () => {

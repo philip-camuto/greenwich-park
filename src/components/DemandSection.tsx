@@ -32,8 +32,11 @@ export function DemandSection({
   const { pinnedIdx, setPinnedIdx } = useScrubState();
   const isScrubbed = pinnedIdx != null && pinnedIdx !== 0;
 
+  // Pinning slot 0 keeps the initial (observation-backed) numbers: swapping
+  // to the modeled slot-0 score made the headline jump on a tap that means
+  // "now", which read as a glitch.
   const displayedPoint =
-    pinnedIdx != null ? forecast.points[pinnedIdx] : null;
+    pinnedIdx != null && pinnedIdx > 0 ? forecast.points[pinnedIdx] : null;
   const score = displayedPoint?.score ?? initialScore;
   const category: DemandCategory = displayedPoint?.category ?? initialCategory;
   const modeledAt = displayedPoint?.timestamp ?? initialModeledAt;

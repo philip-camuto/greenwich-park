@@ -39,9 +39,8 @@ export function ScoreCard({
           <div className="mono text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--label-tertiary)]">
             Demand score
             {modeledTimeLabel && (
-              <span className="text-[var(--label-secondary)]">
-                {" · "}
-                {modeledTimeLabel}
+              <span className="ml-2 text-[var(--label-secondary)]">
+                Updated {modeledTimeLabel}
               </span>
             )}
           </div>

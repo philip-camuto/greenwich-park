@@ -38,33 +38,33 @@ export function baselineRationale(
   const isRetailPeak = hour >= 10 && hour <= 17;
 
   if (isLateNight) {
-    return "Late night — most retail and many restaurants closed.";
+    return "Late night. Most retail and many restaurants closed.";
   }
   if (isEarlyMorning && !isWeekend) {
-    return "Weekday early morning — coffee, gym, light retail. Commuter rush hits I-95, not the Ave.";
+    return "Weekday early morning: coffee, gym, light retail. Commuter rush hits I-95, not the Ave.";
   }
   if (dow === 0 && isLunch && baseline >= 70) {
-    return "Sunday brunch peak — free parking on Sunday pulls more cars than weekdays.";
+    return "Sunday brunch peak. Free parking on Sunday pulls more cars than weekdays.";
   }
   if (dow === 6 && isRetailPeak && baseline >= 80) {
-    return "Saturday prime retail window — shopping plus family lunch is the heaviest hour-of-week.";
+    return "Saturday prime retail window. Shopping plus family lunch is the heaviest hour of the week.";
   }
   if (isWeekend && isRetailPeak) {
-    return "Weekend retail hours — typical shopping pull.";
+    return "Weekend retail hours, typical shopping pull.";
   }
   if (!isWeekend && isLunch) {
-    return "Weekday lunch — office and salon/spa crowd, not commuter throughput.";
+    return "Weekday lunch: office and salon/spa crowd, not commuter throughput.";
   }
   if (!isWeekend && isDinner && (dow === 4 || dow === 5)) {
-    return "Thu/Fri dinner — pre-weekend dinner crowd runs hotter than Mon-Wed.";
+    return "Thu/Fri dinner. The pre-weekend dinner crowd runs hotter than Mon-Wed.";
   }
   if (!isWeekend && isDinner) {
-    return "Weekday dinner — moderate restaurant pull.";
+    return "Weekday dinner, moderate restaurant pull.";
   }
   if (isRetailPeak) {
-    return "Mid-day retail hours — steady but not peak.";
+    return "Midday retail hours, steady but not peak.";
   }
-  return "Off-peak hours — light foot traffic on the Ave.";
+  return "Off-peak hours, light foot traffic on the Ave.";
 }
 
 function weatherReason(ok: boolean, tempF: number | null, condition: string | null): string {
@@ -86,12 +86,12 @@ function trafficReason(
     return "I-95 heavy";
   }
   if (!ok) return "data unavailable";
-  return `${severity ?? "—"} I-95 conditions`;
+  return `${severity ?? "unknown"} I-95 conditions`;
 }
 
 function holidayReason(isHoliday: boolean, name: string | null, kind: string | null): string {
   if (!isHoliday) return "regular day";
-  return `${name ?? "holiday"} (${kind ?? "—"})`;
+  return `${name ?? "holiday"} (${kind ?? "unknown"})`;
 }
 
 function schoolReason(publicInSession: boolean, privateInSession: boolean): string {
@@ -126,7 +126,7 @@ function alertsReason(ok: boolean, status: string | null): string {
     case "normal":
       return "running normally";
     default:
-      return "—";
+      return "unknown";
   }
 }
 
@@ -214,12 +214,12 @@ export function breakdownViewFromForecastPoint(point: ForecastPoint): BreakdownV
     {
       label: "Holidays",
       mod: b.holidayMod,
-      reason: "—",
+      reason: "",
     },
     {
       label: "School calendar",
       mod: b.schoolMod,
-      reason: "—",
+      reason: "",
     },
     {
       label: "Local events",

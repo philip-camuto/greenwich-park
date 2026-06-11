@@ -72,7 +72,7 @@ export default async function DebugPage({
         />
       </Section>
 
-      <Section title="Inputs · Weather">
+      <Section title="Inputs: Weather">
         <Field label="ok" value={observation.weatherOk ? "yes" : "no"} />
         <Field label="Temp" value={`${observation.weatherTempF}°F`} />
         <Field label="Condition" value={observation.weatherCondition} />
@@ -84,7 +84,7 @@ export default async function DebugPage({
         <Field label="Is day" value={observation.weatherIsDay ? "yes" : "no"} />
       </Section>
 
-      <Section title="Inputs · Traffic">
+      <Section title="Inputs: Traffic">
         <Field label="ok" value={observation.trafficOk ? "yes" : "no"} />
         <Field label="Severity" value={observation.trafficSeverity} />
         <Field
@@ -109,7 +109,7 @@ export default async function DebugPage({
         />
       </Section>
 
-      <Section title="Inputs · Time">
+      <Section title="Inputs: Time">
         <Field label="Local date" value={observation.localDate} />
         <Field label="Local hour" value={observation.hour} />
         <Field label="Day of week" value={observation.dayOfWeek} />
@@ -237,7 +237,7 @@ function Field({
   return (
     <div className="grid grid-cols-[16rem_1fr] gap-2">
       <span className="text-[var(--muted)]">{label}</span>
-      <span>{value === null || value === undefined ? "—" : String(value)}</span>
+      <span>{value === null || value === undefined ? "-" : String(value)}</span>
     </div>
   );
 }

@@ -13,7 +13,10 @@ name: ingest
 
 on:
   schedule:
-    - cron: "*/30 * * * *" # every 30 minutes, on :00 and :30 UTC
+    # Offset from :00/:30 — GitHub drops or delays scheduled runs that land
+    # on the congested round minutes (observed: runs 3-5 HOURS apart instead
+    # of 30 min). Odd minutes get materially better fire rates.
+    - cron: "13,43 * * * *" # every 30 minutes, on :13 and :43 UTC
   workflow_dispatch: {} # manual trigger from the Actions tab
 
 jobs:

@@ -187,7 +187,7 @@ export function AvenueMap({ category, perBlock, score, verdict }: Props) {
       >
         {activeBlockId
           ? readoutFor(activeBlockId, verdict, score, perBlock)
-          : "Hover or tap a block"}
+          : "Tap a block"}
       </div>
 
       <p className="text-center text-[12px] leading-relaxed text-[var(--label-tertiary)]">
@@ -216,5 +216,5 @@ function readoutFor(
     reason,
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join(", ");
 }
