@@ -5,7 +5,11 @@ import { ForecastChart } from "@/components/ForecastChart";
 import { SectionCaption } from "@/components/SectionCaption";
 import { ScoreCard } from "@/components/ScoreCard";
 import { actionCopyFor } from "@/lib/copy";
-import { buildForecastForGreenwich, type Forecast } from "@/lib/forecast";
+import {
+  bestTimeWithin,
+  buildForecastForGreenwich,
+  type Forecast,
+} from "@/lib/forecast";
 import { hotspotById } from "@/lib/hotspots";
 import { getObservationForDisplay } from "@/lib/ingest";
 import { perBlockScores, scoreBlock, blockProfiles } from "@/lib/per-block";
@@ -13,7 +17,11 @@ import { perBlockScores, scoreBlock, blockProfiles } from "@/lib/per-block";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-function forecastForBlock(forecast: Forecast, blockId: string): Forecast {
+function forecastForBlock(
+  forecast: Forecast,
+  blockId: string,
+  hours: { open: number; close: number },
+): Forecast {
   const profile = blockProfiles[blockId];
   if (!profile) return forecast;
   const points = forecast.points.map((p) => {
@@ -27,12 +35,9 @@ function forecastForBlock(forecast: Forecast, blockId: string): Forecast {
       category: block.category,
     };
   });
-  let bestTime: Forecast["bestTime"] = null;
-  for (const p of points) {
-    if (bestTime === null || p.score < bestTime.score) {
-      bestTime = { timestamp: p.timestamp, localHour: p.localHour, score: p.score };
-    }
-  }
+  // Best time only while the anchor business is open — "come at midnight"
+  // is never the right answer for a store that closed at 6pm.
+  const bestTime = bestTimeWithin(points, hours.open, hours.close);
   return { ...forecast, points, bestTime };
 }
 
@@ -55,7 +60,11 @@ export default async function HotspotPage({
     dayOfWeek: observation.dayOfWeek,
   });
   const block = blockScores[hotspot.blockId];
-  const blockForecast = forecastForBlock(forecast, hotspot.blockId);
+  const blockForecast = forecastForBlock(
+    forecast,
+    hotspot.blockId,
+    hotspot.hours,
+  );
 
   const action = actionCopyFor({
     currentScore: block.score,

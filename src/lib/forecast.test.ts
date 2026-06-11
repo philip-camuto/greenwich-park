@@ -7,6 +7,7 @@ import {
   weatherForTimestamp,
   BEST_HOUR_START,
   BEST_HOUR_END,
+  bestTimeWithin,
 } from "./forecast";
 import type {
   HourlyForecastPoint,
@@ -117,6 +118,18 @@ describe("buildForecast", () => {
     expect(f.bestTime).not.toBeNull();
     expect(f.bestTime!.localHour).toBeGreaterThanOrEqual(BEST_HOUR_START);
     expect(f.bestTime!.localHour).toBeLessThan(BEST_HOUR_END);
+  });
+
+  it("bestTimeWithin respects custom opening hours", () => {
+    const f = buildForecast({ now, currentWeather: w(), traffic: tr(), hourly });
+    // A store open 10am-6pm must never get a recommendation outside that.
+    const best = bestTimeWithin(f.points, 10, 18);
+    if (best) {
+      expect(best.localHour).toBeGreaterThanOrEqual(10);
+      expect(best.localHour).toBeLessThan(18);
+    }
+    // A window the forecast never reaches yields null, not a bad answer.
+    expect(bestTimeWithin(f.points, 3, 4)).toBeNull();
   });
 
   it("snaps every slot after the first to the half-hour grid", () => {
