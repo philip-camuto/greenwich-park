@@ -1,0 +1,37 @@
+{
+ "panel_hours": 6342,
+ "effects": {
+  "raining": {
+   "rate_ratio": 0.432,
+   "ci95": [
+    0.349,
+    0.534
+   ],
+   "n_hours": 582
+  },
+  "snowing": {
+   "rate_ratio": 0.33,
+   "ci95": [
+    0.177,
+    0.618
+   ],
+   "n_hours": 124
+  },
+  "freezing": {
+   "rate_ratio": 0.834,
+   "ci95": [
+    0.684,
+    1.017
+   ],
+   "n_hours": 401
+  },
+  "warm_nice": {
+   "rate_ratio": 1.052,
+   "ci95": [
+    0.93,
+    1.189
+   ],
+   "n_hours": 2411
+  }
+ }
+}

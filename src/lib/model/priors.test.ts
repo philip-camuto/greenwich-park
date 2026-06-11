@@ -14,11 +14,15 @@ describe("HOUR_DOW_PRIORS shape", () => {
   });
 });
 
-describe("priors match PRD calibration bullets", () => {
-  // Saturday noon-4pm: highest (90-100).
-  it("Saturday 12-15 is 90-100", () => {
-    for (const h of [12, 13, 14]) {
-      expect(getPrior(6, h)).toBeGreaterThanOrEqual(90);
+describe("priors match calibration (hand 2026-05-12 + FOIA citations 2026-06-11)", () => {
+  // Saturday 1pm is the weekly peak per citation data (patrol-adjusted).
+  it("Saturday midday is the weekly max", () => {
+    const sat1pm = getPrior(6, 13);
+    expect(sat1pm).toBeGreaterThanOrEqual(90);
+    for (let dow = 0; dow < 7; dow++) {
+      for (let h = 0; h < 24; h++) {
+        expect(getPrior(dow, h)).toBeLessThanOrEqual(sat1pm);
+      }
     }
   });
 
@@ -30,12 +34,21 @@ describe("priors match PRD calibration bullets", () => {
     }
   });
 
-  // Weekday 11am-2pm lunch: moderate-high (60-75).
-  it("Weekday 11-14 lunch is 55-78", () => {
+  // Citation finding: weekday late morning (10-11am) is the weekday
+  // meter-pressure peak, at or above the 12-1pm lunch window.
+  it("Weekday 10-11am peaks at or above lunch", () => {
+    for (const dow of [1, 2, 3, 4, 5]) {
+      expect(getPrior(dow, 11)).toBeGreaterThanOrEqual(70);
+      expect(getPrior(dow, 11)).toBeGreaterThanOrEqual(getPrior(dow, 12));
+    }
+  });
+
+  // Weekday 11am-2pm: moderate-high.
+  it("Weekday 11-14 is 60-85", () => {
     for (const dow of [1, 2, 3, 4]) {
       for (const h of [11, 12, 13]) {
-        expect(getPrior(dow, h)).toBeGreaterThanOrEqual(50);
-        expect(getPrior(dow, h)).toBeLessThanOrEqual(78);
+        expect(getPrior(dow, h)).toBeGreaterThanOrEqual(60);
+        expect(getPrior(dow, h)).toBeLessThanOrEqual(85);
       }
     }
   });

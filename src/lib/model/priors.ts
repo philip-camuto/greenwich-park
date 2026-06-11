@@ -1,53 +1,67 @@
-// Hardcoded demand priors for the Greenwich Ave shopping district.
+// Demand priors for the Greenwich Ave shopping district.
 //
 // Indexed [dayOfWeek 0=Sun..6=Sat][hour 0..23]. Each cell is the baseline
 // demand score (0-100) for that hour-of-week, before weather, traffic,
 // holiday, or special-event adjustments.
 //
-// Calibration reasoning:
-//   - Greenwich Ave is retail + dining, primary operating window ~10am-9pm.
-//   - On-street parking is metered 2hr weekdays + Saturday; free Sundays.
-//   - Saturday noon-4pm is the heaviest window (shopping + family lunch).
-//   - Sunday peaks at brunch (12-1pm) thanks to free parking + restaurants;
-//     drops in the afternoon as stores trickle closed earlier than weekdays.
-//   - Weekday lunch 11:30-1:30 is a moderate-high bump driven by the office
-//     and salon/spa lunch crowd, not commuter throughput.
-//   - Weekday commuter rush hits I-95, not the Ave. Early morning (6-8am)
-//     on the Ave is mostly coffee + early gym/fitness — low baseline.
-//   - Thu/Fri dinner runs hotter than Mon-Wed (pre-weekend dinner crowd).
-//   - Late night (after 10pm) is always low — most retail and many
-//     restaurants are closed by 10pm even on weekends.
+// Calibration sources:
+//   1. Hand calibration by a frequent local user (2026-05-12) — still the
+//      sole source for Sundays, evenings, and early mornings.
+//   2. FOIA parking-citation data: 21,892 citations on Lower/Upper Greenwich
+//      Ave, Jan 2022 - Dec 2024 (Greenwich Parking Services, received
+//      2026-06-11). Enforcement only runs ~9am-4pm Mon-Sat, so only those 48
+//      cells were recalibrated; each is a blend of 60% data / 40% hand prior
+//      (30% data in the thinner 8am/4pm shoulder cells). Citation intensity
+//      is patrol-adjusted (citations per active officer-hour) so enforcement
+//      staffing patterns don't masquerade as demand, and year-normalized so
+//      the 2023 staffing dip doesn't drag means down. Derivation:
+//      analysis/recalibrate_priors.py -> analysis/out/recalibrated_priors.json.
 //
-// These numbers are calibrated guesses by a frequent local user, not data.
+// What the citation data changed:
+//   - Weekday 9-11am was underestimated by 20-30 points: late morning is the
+//     real weekday meter-pressure peak (errands + salon/spa before lunch),
+//     not the 12-1pm lunch window.
+//   - Weekday 2-4pm runs slightly cooler than guessed.
+//   - Saturday midday stays the weekly maximum but tops out at ~93, not 95,
+//     and the peak sits at 1pm rather than a noon-1pm plateau.
+//
+// Still hand-calibrated (no enforcement = no citation signal):
+//   - Sundays (parking is free, zero enforcement; 26 tickets in 3 years).
+//   - Evenings after ~4pm, incl. the Thu/Fri dinner bump.
+//   - Early mornings before ~8am, late night.
+//
 // Phase 2 swaps this matrix for the output of a model trained on historical
 // observations. Re-tune by editing values and bumping the calibration date
 // below; do not introduce conditional logic here.
 //
-// Last calibrated: 2026-05-12.
+// Last calibrated: 2026-06-11 (citation-data recalibration).
 
 const SUN: number[] = [
   /*  0 */ 5, 5, 5, 5, 5, 5, 8, 12, 25, 45, 65, 78, 85, 85, 78, 65, 55, 50, 45,
   40, 30, 18, 8, 5,
 ];
 const MON: number[] = [
-  /*  0 */ 5, 5, 5, 5, 5, 5, 8, 18, 30, 38, 45, 55, 68, 68, 55, 50, 55, 60, 60,
+  /*  0 */ 5, 5, 5, 5, 5, 5, 8, 18, 31, 64, 74, 79, 71, 68, 58, 46, 52, 60, 60,
   55, 40, 25, 12, 6,
 ];
-const TUE: number[] = MON;
+const TUE: number[] = [
+  /*  0 */ 5, 5, 5, 5, 5, 5, 8, 18, 31, 54, 71, 76, 68, 66, 67, 53, 50, 60, 60,
+  55, 40, 25, 12, 6,
+];
 const WED: number[] = [
-  /*  0 */ 5, 5, 5, 5, 5, 5, 8, 18, 30, 40, 48, 60, 72, 72, 58, 52, 58, 62, 62,
+  /*  0 */ 5, 5, 5, 5, 5, 5, 8, 18, 31, 49, 74, 77, 73, 68, 61, 51, 54, 62, 62,
   55, 40, 25, 12, 6,
 ];
 const THU: number[] = [
-  /*  0 */ 5, 5, 5, 5, 5, 5, 8, 18, 32, 42, 50, 62, 72, 72, 58, 55, 62, 70, 72,
+  /*  0 */ 5, 5, 5, 5, 5, 5, 8, 18, 32, 61, 74, 82, 72, 71, 61, 54, 55, 70, 72,
   65, 50, 32, 18, 8,
 ];
 const FRI: number[] = [
-  /*  0 */ 5, 5, 5, 5, 5, 5, 10, 22, 38, 48, 55, 68, 78, 78, 68, 65, 70, 80, 85,
+  /*  0 */ 5, 5, 5, 5, 5, 5, 10, 22, 36, 55, 74, 77, 74, 74, 66, 56, 68, 80, 85,
   82, 72, 55, 35, 18,
 ];
 const SAT: number[] = [
-  /*  0 */ 12, 8, 5, 5, 5, 5, 10, 20, 35, 55, 75, 88, 95, 95, 92, 88, 82, 78,
+  /*  0 */ 12, 8, 5, 5, 5, 5, 10, 20, 35, 63, 77, 88, 86, 93, 82, 80, 75, 78,
   80, 80, 72, 55, 38, 22,
 ];
 

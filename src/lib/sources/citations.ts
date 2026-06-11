@@ -1,41 +1,38 @@
 // =========================================================================
-// PHASE 3 STUB — FOIA parking-citation data
+// FOIA parking-citation data — RECEIVED 2026-06-11 (historical only)
 // =========================================================================
 //
-// Status: blocked on FOIA response from Greenwich Parking Services.
-// Owner: Philip (FOIA correspondence is out of scope for this codebase).
+// Status: Greenwich Parking Services answered the FOIA with a one-time
+// historical export: 21,892 citations on Lower/Upper Greenwich Ave,
+// Jan 2022 - Dec 2024, stored in `citations_raw` (see db/schema.ts and
+// analysis/import_citations.ts).
 //
-// What the data is:
-//   Parking citations issued on or near Greenwich Avenue. Public record once
-//   FOIA'd. Each row is a single ticket; expected columns based on common
-//   municipal datasets: issued_at, block (e.g. "200 Greenwich Ave"),
-//   violation_type (overtime meter, no parking, expired plate, etc),
-//   officer_id (sometimes redacted), plate (anonymized).
+// What changed vs. the original plan: there is NO live citation feed and
+// none is coming — the town exports on request, ending Dec 2024. So the
+// live-density ideas this file originally sketched (15-min density column
+// on `observations`, a real-time citationModifier) are dead. The functions
+// below stay empty on purpose; wiring 2024 tickets into a "right now"
+// signal would pretend to know something we don't.
 //
-// Why it's signal:
-//   Citations are issued where meters are full and overstayed. The
-//   density of citations per block per 15-min bucket is a defensible proxy
-//   for "this block is at capacity right now." Citations under-count by
-//   roughly the rate at which officers actually patrol — but that bias is
-//   stable hour-of-week, so it cancels out in a heuristic and gets baked
-//   into a Phase 2 trained model.
+// What the data IS used for (offline):
+//   - Recalibrating HOUR_DOW_PRIORS: analysis/recalibrate_priors.py
+//     (patrol-adjusted, year-normalized hour-of-week intensity, blended
+//     60/40 with the hand priors inside the 9am-4pm Mon-Sat enforcement
+//     window). Applied 2026-06-11; see docs/citations-recalibration.md.
+//   - Validating the weather modifiers via Poisson GLM against 3 years of
+//     hourly Open-Meteo history (rain -20 confirmed once patrol staffing
+//     is controlled for; snow -40 consistent).
+//   - Phase 2 training features / Phase 3 per-block offsets, when those land.
 //
-// Where it plugs in:
-//   - new column on `observations`: `citation_density_last_15min` (real)
-//   - new modifier in heuristic: citationModifier(density) → +0..+10
-//   - eventually: ground-truth label for "was this prior right?" by
-//     comparing predicted demand against block-level citation density.
+// Known limits of the signal: enforcement runs ~9am-4pm Mon-Sat only
+// (Sundays are free parking — 26 tickets in 3 years), 2023 volume is ~55%
+// of 2022/2024 (staffing, not demand), and officer "999" is a shared
+// device ID so per-officer patrol estimates undercount.
 //
-// Implementation outline (when FOIA returns):
-//   1. Bulk-import the CSV into a `citations_raw` table.
-//   2. Build a materialized view `citation_density_15min` keyed by
-//      (block, fifteenMinBucket).
-//   3. Replace the empty array below with a query that returns rows for
-//      the current 15-min window.
-//
-// Do NOT implement until the FOIA returns and the dataset is in hand.
-// Adding stub behavior risks shipping a feature that pretends to know
-// something it doesn't.
+// If a recurring export gets negotiated (quarterly FOIA refresh), revisit:
+//   1. Re-run analysis/import_citations.ts on the new file (idempotent,
+//      upserts on citation_number).
+//   2. Re-run the recalibration and bump the date in priors.ts.
 // =========================================================================
 
 export type CitationRecord = {
