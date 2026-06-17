@@ -104,6 +104,7 @@ export type MetroNorthAlertsInput = {
 
 export type ScoreBreakdown = {
   base: number;
+  baseSource: "model" | "prior"; // "model" inside the enforcement window, else "prior"
   weatherMod: number;
   trafficMod: number;
   holidayMod: number;

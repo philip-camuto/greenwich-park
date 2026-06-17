@@ -11,6 +11,7 @@ import type {
   WeatherSnapshot,
 } from "./types";
 import { getPrior } from "./priors";
+import { trainedBaseScore } from "./trained";
 
 // Phase 1 heuristic. Pure function. Replaced wholesale in Phase 2 by a
 // trained model that consumes the same ModelInput shape.
@@ -160,7 +161,12 @@ function clamp(n: number, lo: number, hi: number): number {
 export function computeDemand(input: ModelInput): DemandScore {
   const { weather, traffic, time } = input;
 
-  const base = getPrior(time.dayOfWeek, time.hour);
+  // In the enforcement window the trained model supplies the demand base;
+  // outside it (no citation signal) we fall back to the hand-calibrated prior.
+  // Weather is layered on identically either way (the model excludes weather).
+  const trainedBase = trainedBaseScore(time.dayOfWeek, time.hour);
+  const base = trainedBase ?? getPrior(time.dayOfWeek, time.hour);
+  const baseSource: "model" | "prior" = trainedBase != null ? "model" : "prior";
   const weatherMod = weatherModifier(weather);
   const trafficMod = trafficModifier(traffic);
   const holidayMod = holidayModifier(time.holidayKind);
@@ -202,6 +208,7 @@ export function computeDemand(input: ModelInput): DemandScore {
     confidence: confidenceFrom(weather, traffic),
     breakdown: {
       base,
+      baseSource,
       weatherMod,
       trafficMod,
       holidayMod,
