@@ -43,6 +43,8 @@ Forward-chaining CV, all candidates recomputed under identical folds (lower Pois
 
 The GLM wins pooled deviance by 0.6%, but the order flips on MAE and the models split by fold — a wash, not a win. On a tie you keep the simpler, already-shipped, already-validated model. The full reasoning (why a tree can't beat a 24-parameter cubic GLM on a `(dow, hour)` grid, why E2 fails, and the exact conditions that would flip the verdict — more citation-years, or Phase-4 real occupancy labels with non-linear weather×event interactions) is in [docs/gbm-vs-glm-decision.md](docs/gbm-vs-glm-decision.md).
 
+The bottleneck here is data, not algorithm, and the unlock is already in motion: a FOIA for the two things that would lift the ceiling — real occupancy/payment data (ParkMobile, meters, garages) and the enforcement patrol schedule (for a truly exogenous exposure offset) — was filed with the Town of Greenwich on 2026-06-17 and acknowledged the same day. When those records land, the GBM bake-off and the exposure model get re-run on ground truth instead of the citation proxy.
+
 Offset wiring was verified before any of the above was trusted: exposure-linearity (`pred(2·E) == 2·pred(E)`, proving the output is a rate × exposure, not a count) and offset reconciliation on an unregularized fit (`sum(rate·E) == sum(actual)`). Both pass; see [`analysis/out/gbm_report.json`](analysis/out/gbm_report.json). Training + holdout harness: [analysis/train_model.py](analysis/train_model.py); GBM benchmark: [analysis/train_gbm.py](analysis/train_gbm.py); method and limits: [docs/phase2-model-validation.md](docs/phase2-model-validation.md).
 
 ## Stack
@@ -202,7 +204,7 @@ The `observations_by_zone` table in [`src/lib/db/schema.ts`](src/lib/db/schema.t
 | 1 | this build | Public signals + heuristic. Live now. |
 | 2 | next | 12-month historical backfill. Trained model replaces `heuristic.ts` wholesale, same `ModelInput` shape. |
 | 3 | FOIA data received 2026-06-11 | 21,892 citations (2022-2024) in `citations_raw`; priors recalibrated for the enforcement window. No live feed exists — `parkMobile.ts` still pending for real-time proxies. |
-| 4 | pending Greenwich Parking Svcs | `cameraFeed.ts` Raspberry Pi YOLO ground truth replaces priors. |
+| 4 | occupancy + patrol FOIA filed 2026-06-17 (acknowledged, pending) | Town of Greenwich FOIA for ParkMobile/meter/garage payment + occupancy data and the enforcement patrol schedule. On arrival: real occupancy labels replace the citation proxy and a truly exogenous exposure offset replaces the ticket-derived one. `cameraFeed.ts` Raspberry Pi YOLO ground truth is the parallel sensor path. |
 
 ## Honest framing
 
