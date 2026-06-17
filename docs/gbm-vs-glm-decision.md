@@ -22,7 +22,9 @@ Two exposure variants were tested, both wired as LightGBM `init_score = log(E)`:
   exposure on `C(dow) + cubic-hour`, so a cell's exposure is the global
   week-shape at that position rather than its own ticket-driven count. (Caveat:
   E2 removes the per-cell endogeneity but is still ticket-derived. A truly
-  exogenous patrol exposure needs the patrol-schedule FOIA, which we do not have.)
+  exogenous patrol exposure needs the patrol-schedule FOIA — filed with the Town
+  of Greenwich Dept. of Parking Services on 2026-06-17, acknowledged same day,
+  records pending. Until it lands, E2 is the best available approximation.)
 
 ## Verdict
 
@@ -123,9 +125,14 @@ roadmap:
    also fix the fold-1 single-year calibration problem above.
 
 2. **Phase 4: real occupancy labels instead of citations-as-proxy (the real
-   trigger).** Today the target is citation counts, a thin proxy where the only
-   signal is a smooth day x hour shape, which the GLM nails. When the target
-   becomes actual occupancy or sensor data, the GBM's natural edge appears:
+   trigger).** A FOIA for the occupancy and payment data that supplies these
+   labels — ParkMobile transactions, meter/pay-station payments, garage
+   entry/exit, and any occupancy surveys — was filed with the Town of Greenwich
+   on 2026-06-17 and acknowledged the same day; records are pending. When that
+   data lands, re-run this bake-off. Today the target is citation counts, a thin
+   proxy where the only signal is a smooth day x hour shape, which the GLM nails.
+   When the target becomes actual occupancy or sensor data, the GBM's natural
+   edge appears:
    **non-linear interactions the GLM's additive offset and per-weekday cubic
    structurally cannot see**, for example rain x Saturday x December behaving
    differently than the sum of those effects. The GLM bakes in "smooth bell per
