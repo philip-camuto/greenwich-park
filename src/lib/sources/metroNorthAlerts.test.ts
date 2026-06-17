@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   classifyStatusSummary,
   fetchMetroNorthAlerts,
@@ -132,6 +132,27 @@ describe("summarizeForNewHaven", () => {
 });
 
 describe("fetchMetroNorthAlerts", () => {
+  // fetchMetroNorthAlerts now requires MTA_CAMSYS_KEY and short-circuits to
+  // empty() without it (no embedded default key). The fetch-path tests need a
+  // key set so they exercise the request, not the early return.
+  const ORIG_KEY = process.env.MTA_CAMSYS_KEY;
+  beforeEach(() => {
+    process.env.MTA_CAMSYS_KEY = "test-key";
+  });
+  afterEach(() => {
+    if (ORIG_KEY === undefined) delete process.env.MTA_CAMSYS_KEY;
+    else process.env.MTA_CAMSYS_KEY = ORIG_KEY;
+  });
+
+  it("returns ok:false without calling fetch when MTA_CAMSYS_KEY is unset", async () => {
+    delete process.env.MTA_CAMSYS_KEY;
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    const out = await fetchMetroNorthAlerts();
+    expect(out.ok).toBe(false);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it("returns ok:false on non-2xx", async () => {
     vi.stubGlobal(
       "fetch",

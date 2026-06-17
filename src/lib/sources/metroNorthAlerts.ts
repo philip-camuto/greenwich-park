@@ -19,10 +19,9 @@ import { fetchWithTimeout } from "@/lib/utils/fetch";
 
 const ENDPOINT =
   "https://collector-otp-prod.camsys-apps.com/realtime/serviceStatus";
-// Public client key embedded in the mta.info status page; the default below
-// keeps the source self-contained, but override with MTA_CAMSYS_KEY in env
-// so rotations (or moving to a private key) don't need a redeploy.
-const DEFAULT_API_KEY = "qeqy84JE7hUKfaI0Lxm6Ts8viFRGo3X19v";
+// Requires MTA_CAMSYS_KEY in env (the client key the mta.info status page
+// uses). When unset, this source degrades gracefully to "unknown" rather than
+// shipping a key — see fetchMetroNorthAlerts below.
 const REVALIDATE_SECONDS = 300; // 5 min; alerts change on the minute scale
 
 // Route IDs we care about for Greenwich Ave.
@@ -148,7 +147,8 @@ export function summarizeForNewHaven(
 
 export async function fetchMetroNorthAlerts(): Promise<MetroNorthAlerts> {
   try {
-    const key = process.env.MTA_CAMSYS_KEY ?? DEFAULT_API_KEY;
+    const key = process.env.MTA_CAMSYS_KEY;
+    if (!key) return empty();
     const url = `${ENDPOINT}?apikey=${encodeURIComponent(key)}`;
     const res = await fetchWithTimeout(url, { next: { revalidate: REVALIDATE_SECONDS } });
     if (!res.ok) return empty();
