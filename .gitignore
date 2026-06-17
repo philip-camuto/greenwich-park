@@ -47,13 +47,3 @@ analysis/data/
 __pycache__/
 *.pyc
 analysis/.venv-gbm/
-
-# agent scratch state
-.superpowers/
-
-# application material + internal todos — keep local, not in repo
-yc-startup-school-report.md
-TODOS.md
-
-# internal AI-workflow planning artifacts — keep local, not in repo
-docs/superpowers/
