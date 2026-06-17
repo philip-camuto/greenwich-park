@@ -8,9 +8,9 @@ Live: https://parking.philipcamuto.com
 
 ## What it is
 
-Phase 1 is a **demand indicator**, not a parking finder. There is no live occupancy data yet. The score (0-100) is computed from:
+This is a **demand indicator**, not a parking finder. There is no live occupancy data yet. The score (0-100) is computed from:
 
-- a hardcoded prior matrix, hand-calibrated by a frequent local user and recalibrated against 21,892 FOIA'd parking citations (2022-2024) inside the 9am-4pm Mon-Sat enforcement window — see [docs/citations-recalibration.md](docs/citations-recalibration.md)
+- a **trained demand model** — a Poisson GLM fit on 21,892 FOIA'd parking citations (2022-2024), patrol-adjusted (citations per officer-day, so enforcement staffing isn't mistaken for demand) and validated on a held-out year. It supplies the day×hour demand surface inside the Mon-Sat 8am-4pm enforcement window; outside that window (no citation signal) a hand-calibrated prior takes over. Month and weather are deliberately **not** learned from citations — enforcement behaviour confounds them — so weather is a separate modifier (below). Training + holdout harness: [analysis/train_model.py](analysis/train_model.py); method, results, and honest limits: [docs/phase2-model-validation.md](docs/phase2-model-validation.md). Prior recalibration: [docs/citations-recalibration.md](docs/citations-recalibration.md)
 - live weather from Open-Meteo
 - live I-95 event feed from CTDOT 511
 - live traffic flow from TomTom (preferred over CT 511 when available)
@@ -20,14 +20,16 @@ Phase 1 is a **demand indicator**, not a parking finder. There is no live occupa
 - holiday classification (closure / retail-spike / observed / none)
 - school-calendar awareness for both Greenwich Public Schools **and** the local private schools (Brunswick, Greenwich Country Day, Greenwich Academy); their calendars diverge enough to matter, especially during the 2-week private spring break in early March
 
-Phases 2-4 progressively swap public signals for real occupancy data (FOIA citations, ParkMobile, camera pilot).
+The trained model currently learns from the citation *proxy*. Later phases swap in real occupancy data (ParkMobile, camera pilot) and retrain on true occupancy labels via the same harness.
+
+> **Note on the FOIA data:** the raw 21,892-citation dataset is not included in this repo. Only the derived, aggregated outputs are committed (`analysis/out/*.json`). The recalibration scripts document the method but can't reproduce it end-to-end without the source citations.
 
 ## Stack
 
 - Next.js 16 App Router (Turbopack), TypeScript, Tailwind 4, React 19
 - Drizzle ORM + Neon Postgres (provisioned via Vercel Marketplace)
 - Vercel deployment, GitHub auto-deploy on push to `main`
-- Vitest for unit tests (205 passing)
+- Vitest for unit tests (223)
 - GitHub Actions cron for 30-min ingest (Vercel Cron's Hobby cap is too coarse)
 - No client-side state. No animations. No auth on the public surface. No analytics.
 
