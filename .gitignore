@@ -50,3 +50,7 @@ analysis/.venv-gbm/
 
 # agent scratch state
 .superpowers/
+
+# application material + internal todos — keep local, not in repo
+yc-startup-school-report.md
+TODOS.md
