@@ -1,0 +1,125 @@
+{
+ "method": "leave-one-year-out CV (2022/2023/2024), pooled out-of-sample",
+ "candidates": {
+  "model": {
+   "deviance": 5347.0,
+   "mae": 53.86
+  },
+  "prior": {
+   "deviance": 7295.7,
+   "mae": 64.11
+  },
+  "heuristic": {
+   "deviance": 5274.1,
+   "mae": 53.42
+  },
+  "blend@0.0": {
+   "deviance": 7295.7,
+   "mae": 64.11
+  },
+  "blend@0.05": {
+   "deviance": 7069.1,
+   "mae": 63.03
+  },
+  "blend@0.1": {
+   "deviance": 6859.2,
+   "mae": 62.01
+  },
+  "blend@0.15": {
+   "deviance": 6665.1,
+   "mae": 61.1
+  },
+  "blend@0.2": {
+   "deviance": 6486.0,
+   "mae": 60.25
+  },
+  "blend@0.25": {
+   "deviance": 6321.2,
+   "mae": 59.45
+  },
+  "blend@0.3": {
+   "deviance": 6170.0,
+   "mae": 58.68
+  },
+  "blend@0.35": {
+   "deviance": 6032.0,
+   "mae": 58.04
+  },
+  "blend@0.4": {
+   "deviance": 5906.6,
+   "mae": 57.43
+  },
+  "blend@0.45": {
+   "deviance": 5793.3,
+   "mae": 56.82
+  },
+  "blend@0.5": {
+   "deviance": 5691.8,
+   "mae": 56.22
+  },
+  "blend@0.55": {
+   "deviance": 5601.7,
+   "mae": 55.64
+  },
+  "blend@0.6": {
+   "deviance": 5522.6,
+   "mae": 55.13
+  },
+  "blend@0.65": {
+   "deviance": 5454.4,
+   "mae": 54.69
+  },
+  "blend@0.7": {
+   "deviance": 5396.7,
+   "mae": 54.47
+  },
+  "blend@0.75": {
+   "deviance": 5349.3,
+   "mae": 54.27
+  },
+  "blend@0.8": {
+   "deviance": 5312.0,
+   "mae": 54.11
+  },
+  "blend@0.85": {
+   "deviance": 5284.8,
+   "mae": 53.96
+  },
+  "blend@0.9": {
+   "deviance": 5267.4,
+   "mae": 53.81
+  },
+  "blend@0.95": {
+   "deviance": 5259.7,
+   "mae": 53.68
+  },
+  "blend@1.0": {
+   "deviance": 5261.8,
+   "mae": 53.67
+  }
+ },
+ "best_blend": {
+  "alpha": 0.95,
+  "deviance": 5259.7,
+  "mae": 53.68
+ },
+ "bootstrap": {
+  "heuristic_vs_model": {
+   "mean_gap": -81.8,
+   "ci95": [
+    -800.7,
+    679.4
+   ],
+   "b_better_prob": 0.404
+  },
+  "heuristic_vs_best_blend": {
+   "mean_gap": 11.7,
+   "ci95": [
+    -576.0,
+    535.3
+   ],
+   "b_better_prob": 0.528
+  }
+ },
+ "note": "gap = deviance(A) - deviance(B); positive => B lower deviance (better). b_better_prob = P(B beats A) over bootstrap resamples of cells."
+}
