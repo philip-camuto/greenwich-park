@@ -42,3 +42,7 @@ yarn-error.log*
 next-env.d.ts
 .env*.local
 analysis/data/
+
+# Python
+__pycache__/
+*.pyc
