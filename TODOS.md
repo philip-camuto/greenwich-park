@@ -64,16 +64,42 @@ statsmodels`), then these become straightforward. The raw CSV lives at
   validated, not changed, so stakes are low. Listed here only so it isn't
   rediscovered as new. If ever revisited, cluster SEs on date.
 
+### T5 — RESOLVED 2026-06-17: GBM challenger evaluated, GLM retained
+
+- **What:** tested whether a regularized gradient-boosted Poisson model
+  (LightGBM, two exposure variants E1/E2) beats the shipped Poisson GLM on the
+  day x hour demand surface. Forward-chaining CV against the GLM and a
+  seasonal-mean baseline.
+- **Verdict:** **keep the GLM.** GBM does not clear both baselines; pooled
+  deviance 4147 (GBM-E1) vs 4122 (GLM), a 0.6% margin that flips to the GBM on
+  MAE. A wash at this data scale (~54 cells, 2-3 years), not a GBM loss.
+- **Decision record:** `docs/gbm-vs-glm-decision.md` (ADR, with the full CV
+  table, why trees can't beat a 24-param cubic GLM on this surface, the honest
+  strength-of-conclusion, and the revisit conditions: more citation-years, and
+  especially the Phase-4 swap to real occupancy labels where non-linear
+  weather/event interactions would give a tree something the GLM's offset can't
+  see).
+- **Artifacts (committed, not adopted):** `analysis/train_gbm.py`,
+  `analysis/out/gbm_report.json`, `analysis/out/gbm_calibration.png`.
+- **Not a blocker.** Closed with reason; do not re-run blind. Re-open only if a
+  revisit condition in the decision doc is met.
+
 ## Environment / security
 
-### T4 — Secret-scanning hook prints tokens in cleartext during `uv run`
+### T4 — RESOLVED 2026-06-17: cleartext token leak (was NOT a hook)
 
-- **What:** during `uv run` (observed 2026-06-17), a local hook printed a
-  "SECRET PATTERN HITS" report to stdout containing real token values (a GitHub
-  token, a `cfut_` token, a CT API key) plus Obsidian-vault keywords. It scans
-  what looks like a session transcript (~2000+ lines).
-- **Why it matters:** secrets land in plaintext logs / captured output. Local
-  only (not exfiltrating), but it's a leak surface.
-- **Context:** not part of this repo — it's a machine-level hook. Find what emits
-  it (shell init, a uv plugin, or a Claude Code hook) and stop it printing values.
-- **Depends on / blocked by:** nothing; independent of the modeling work.
+- **What it actually was:** stale `/tmp` scratch scripts — `/tmp/secrets.py`
+  plus 4 siblings (`analyze.py`, `scope.py`, `verify.py`, `final.py`) — left by
+  a prior session's secret-audit subagent. `secrets.py` opened a session
+  transcript JSONL and `print()`d every match including literal token values.
+  It was never a Claude/shell hook: the only configured hook
+  (`~/.local/bin/vault-deletion-check.sh`, SessionStart) does no scanning and is
+  innocent. Ruled out plugins, sitecustomize/usercustomize, launchd/cron, and
+  command-type triggers via 20+ controlled probes.
+- **Fix applied:** shredded the 5 `/tmp` scripts; verified nothing on disk can
+  print the banner; benign `python3` from `/tmp` now emits no tokens.
+- **Remediation (tracked outside this repo):** GitHub + Cloudflare tokens being
+  rotated (they were printed to stdout); CT key left (free, rate-limited).
+  Token values redacted from inactive transcripts via
+  `~/.local/bin/scrub-transcript-secrets.sh`; active session scrubbed post-session.
+- **Residual action:** none in this repo. Closed.

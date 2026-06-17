@@ -4,6 +4,8 @@ Shows you when Greenwich Avenue is busy before you drive there.
 
 A hyperlocal demand predictor for on-street parking on Greenwich Avenue, Greenwich CT. Designed to be opened on a phone in the car: glance, decide, drive.
 
+Under the hood: a confound-corrected Poisson GLM (patrol-adjusted, log-exposure offset) trained on 21,892 FOIA'd citations, validated out-of-sample with forward-chaining cross-validation, fused with six live data feeds through a single deterministic scoring function under 227 unit tests. The trained surface was benchmarked against a LightGBM gradient-boosted alternative; the negative result and the decision to keep the GLM are documented in [docs/gbm-vs-glm-decision.md](docs/gbm-vs-glm-decision.md).
+
 Live: https://parking.philipcamuto.com
 
 ## What it is
@@ -24,12 +26,31 @@ The trained model currently learns from the citation *proxy*. Later phases swap 
 
 > **Note on the FOIA data:** the raw 21,892-citation dataset is not included in this repo. Only the derived, aggregated outputs are committed (`analysis/out/*.json`). The recalibration scripts document the method but can't reproduce it end-to-end without the source citations.
 
+## Modeling & validation
+
+The demand surface is a Poisson GLM, `citations ~ C(dow)*(cubic hour)` with a `log(officer-day exposure)` offset, so it estimates citations *per officer-day* (a demand rate) rather than raw citation volume. That offset is the core correction: a citation only exists if an officer was present, so unadjusted counts conflate how busy the street was with how many officers were working. Weather and month are kept *out* of the trained surface on purpose — enforcement behaviour confounds them — and handled as separately-estimated modifiers.
+
+Validation is out-of-sample, never random k-fold (the data is temporal). Two harnesses: leave-one-year-out CV and, for the model comparison, forward-chaining (train past, test future). The honest result is that on a small surface (~54 in-window day×hour cells over 2–3 years) the model class is **saturated** — the trained GLM, a hand-tuned heuristic, and a regularized gradient-boosted tree are statistically indistinguishable. The ceiling is data, not algorithm.
+
+Forward-chaining CV, all candidates recomputed under identical folds (lower Poisson deviance is better):
+
+| model | test 2023 | test 2024 | pooled deviance | pooled MAE |
+| --- | ---: | ---: | ---: | ---: |
+| GBM-E1 (LightGBM) | 2560.3 | 1587.0 | 4147.3 | 63.80 |
+| GBM-E2 (smoothed exposure) | 4449.9 | 4792.5 | 9242.5 | 95.04 |
+| **GLM (shipped)** | **2673.2** | **1449.2** | **4122.4** | **66.57** |
+| seasonal-mean baseline | 2541.7 | 2669.7 | 5211.4 | 64.23 |
+
+The GLM wins pooled deviance by 0.6%, but the order flips on MAE and the models split by fold — a wash, not a win. On a tie you keep the simpler, already-shipped, already-validated model. The full reasoning (why a tree can't beat a 24-parameter cubic GLM on a `(dow, hour)` grid, why E2 fails, and the exact conditions that would flip the verdict — more citation-years, or Phase-4 real occupancy labels with non-linear weather×event interactions) is in [docs/gbm-vs-glm-decision.md](docs/gbm-vs-glm-decision.md).
+
+Offset wiring was verified before any of the above was trusted: exposure-linearity (`pred(2·E) == 2·pred(E)`, proving the output is a rate × exposure, not a count) and offset reconciliation on an unregularized fit (`sum(rate·E) == sum(actual)`). Both pass; see [`analysis/out/gbm_report.json`](analysis/out/gbm_report.json). Training + holdout harness: [analysis/train_model.py](analysis/train_model.py); GBM benchmark: [analysis/train_gbm.py](analysis/train_gbm.py); method and limits: [docs/phase2-model-validation.md](docs/phase2-model-validation.md).
+
 ## Stack
 
 - Next.js 16 App Router (Turbopack), TypeScript, Tailwind 4, React 19
 - Drizzle ORM + Neon Postgres (provisioned via Vercel Marketplace)
 - Vercel deployment, GitHub auto-deploy on push to `main`
-- Vitest for unit tests (223)
+- Vitest for unit tests (227)
 - GitHub Actions cron for 30-min ingest (Vercel Cron's Hobby cap is too coarse)
 - No client-side state. No animations. No auth on the public surface. No analytics.
 
@@ -39,7 +60,7 @@ The trained model currently learns from the citation *proxy*. Later phases swap 
 cp .env.example .env.local       # then fill the keys
 npm install
 npm run dev                      # http://localhost:3000
-npm test                         # vitest, 205 tests
+npm test                         # vitest, 227 tests
 npm run lint                     # eslint
 npx tsc --noEmit                 # type-check
 ```
@@ -55,7 +76,7 @@ See [`.env.example`](.env.example) for the full list and rotation notes. Short v
 | `TOMTOM_API_KEY` | optional | TomTom Traffic Flow. Free tier covers our volume. |
 | `TICKETMASTER_API_KEY` | optional | Ticketmaster Discovery. |
 | `EVENTBRITE_API_KEY` | optional | Eventbrite OAuth private token. |
-| `MTA_CAMSYS_KEY` | optional | Defaults to the public-website embedded key. |
+| `MTA_CAMSYS_KEY` | optional | MTA camsys key for real-time Metro-North alerts. Degrades gracefully to "unknown" when unset. |
 | `CRON_SECRET` | recommended | Bearer auth for `/api/cron/ingest` and gate for `/debug`. |
 
 Sources degrade gracefully when their key is missing — `ok: false` flows through the breakdown and the modifier returns 0.
