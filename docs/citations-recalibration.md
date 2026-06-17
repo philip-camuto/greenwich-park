@@ -85,11 +85,41 @@ uv run --with pandas --with statsmodels --with requests \
 Outputs land in `analysis/out/`. Weather is cached at
 `analysis/data/weather_2022_2024.json` (gitignored, refetched on demand).
 
+## What this recalibration actually drives at runtime
+
+Honest accounting: this recalibration changed only the in-window cells
+(Mon-Sat 8am-4pm). The Phase 2 trained surface (`src/lib/model/trained.ts`),
+which shipped after, supplies the in-window base, blended 95% trained / 5%
+prior (`MODEL_BLEND_ALPHA`, tuned by leave-one-year-out CV in
+`analysis/out/cv_report.json`). At 5% weight the recalibrated in-window values
+move scores by ~1 point at most, so the per-cell changes above (Mon 11am
+55 -> 79, etc.) are now carried to users by the trained surface, not by
+`priors.ts`. The recalibration is preserved as the 5% blend anchor and as a
+record of the citation shape; it is load-bearing in `priors.ts` only OUTSIDE
+the enforcement window, where it changed nothing. To move the in-window curve,
+retrain or change the blend weight, not the prior cells.
+
 ## Known limits
 
 - Citation timestamps lag arrival by up to the meter period (~2h), so the
   intra-day shape is demand smeared rightward by up to an hour or two.
 - The signal is blind after 4pm and on Sundays; those cells remain opinion.
+- **Endogenous patrol exposure.** Patrol presence is measured as distinct
+  (officer, date) pairs that *wrote at least one ticket* in a cell. An officer
+  who patrolled a quiet block and wrote nothing contributes zero exposure and
+  zero count, so the rate (citations per officer-day) is conditioned on
+  "ticketing happened." That compresses the low-demand cells and the window
+  edges (8am, 4pm), where the data is also thinnest. A clean fix needs real
+  patrol schedules (a separate FOIA), not the citation feed. Same construct is
+  the Poisson offset in `analysis/train_model.py`, so the trained surface
+  carries the same bias.
+- **Overlapping staffing corrections (recalibrate path only).** Cell means are
+  both year-normalized (scaled to a common annual mean) and divided by per-cell
+  patrol presence. Both correct for staffing and overlap for the 2023 dip, so
+  the recalibrate-path intensities may be mildly over-corrected. The shipped
+  trained surface uses the cleaner offset form (`train_model.py`) and does not
+  double-correct; this caveat applies to the `recalibrate_priors.py` output,
+  which is the 5%-weighted anchor in-window.
 - One export, ending Dec 2024. If a quarterly refresh gets negotiated,
   re-run the import (idempotent) and the recalibration, and bump the
   calibration date in `priors.ts`.

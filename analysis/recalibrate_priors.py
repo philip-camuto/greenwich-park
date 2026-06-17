@@ -125,6 +125,16 @@ def year_normalized_cell_means(df):
 
     Each year is scaled so its overall mean matches the pooled mean, washing
     out the 2023 staffing dip. Returns raw and patrol-adjusted matrices.
+
+    Two caveats, both documented in docs/citations-recalibration.md:
+      1. Endogenous patrol: exposure p is distinct (officer, date) pairs that
+         ticketed in the cell, so a patrolled-but-quiet hour reads as zero
+         exposure. The adjusted rate c/p is conditioned on "ticketing happened."
+      2. Overlapping corrections: year-normalization (scale) AND the per-cell
+         /p divide both remove staffing, and overlap for the 2023 dip, so the
+         adjusted intensities may be mildly over-corrected. The shipped trained
+         surface (train_model.py) uses the cleaner offset form instead; this
+         output is only the 5%-weighted in-window blend anchor at runtime.
     """
     # days of each dow present per year (denominator for per-hour means)
     all_days = pd.DataFrame({

@@ -118,6 +118,13 @@ def cells(df, years):
     E = distinct (officer, date) pairs that wrote >=1 ticket in the cell =
     officer-days of patrol presence. The Poisson offset log(E) turns the fitted
     rate into citations-per-officer-day = patrol-adjusted demand intensity.
+
+    CAVEAT (endogenous offset): E is observed only when a ticket was written, so
+    a patrolled-but-quiet hour reads as zero exposure AND zero count. The rate
+    N/E is therefore conditioned on "ticketing happened," which compresses the
+    low-demand cells and the window edges (8am/4pm). A clean fix needs real
+    patrol schedules (a separate FOIA), not the citation feed. Documented in
+    docs/citations-recalibration.md "Known limits".
     """
     sub = df[df["year"].isin(years)]
     rows = []

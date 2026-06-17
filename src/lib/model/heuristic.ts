@@ -11,7 +11,7 @@ import type {
   WeatherSnapshot,
 } from "./types";
 import { getPrior } from "./priors";
-import { trainedBaseScore } from "./trained";
+import { MODEL_BLEND_ALPHA, trainedBaseScore } from "./trained";
 
 // Phase 1 heuristic. Pure function. Replaced wholesale in Phase 2 by a
 // trained model that consumes the same ModelInput shape.
@@ -161,12 +161,21 @@ function clamp(n: number, lo: number, hi: number): number {
 export function computeDemand(input: ModelInput): DemandScore {
   const { weather, traffic, time } = input;
 
-  // In the enforcement window the trained model supplies the demand base;
-  // outside it (no citation signal) we fall back to the hand-calibrated prior.
-  // Weather is layered on identically either way (the model excludes weather).
+  // In the enforcement window the demand base is the CV-tuned blend of the
+  // trained surface and the hand prior (MODEL_BLEND_ALPHA on the model, the
+  // rest on the prior). Outside it (no citation signal) the prior is the sole
+  // base. Weather is layered on identically either way (the model excludes
+  // weather). NOTE: at alpha=0.95 the prior's in-window contribution is a
+  // ~1-point nudge, so the recalibrated in-window cells in priors.ts barely
+  // move scores here — the trained surface dominates. priors.ts changes are
+  // load-bearing only OUTSIDE the window. See trained.ts / cv_report.json.
+  const prior = getPrior(time.dayOfWeek, time.hour);
   const trainedBase = trainedBaseScore(time.dayOfWeek, time.hour);
-  const base = trainedBase ?? getPrior(time.dayOfWeek, time.hour);
-  const baseSource: "model" | "prior" = trainedBase != null ? "model" : "prior";
+  const base =
+    trainedBase != null
+      ? Math.round(MODEL_BLEND_ALPHA * trainedBase + (1 - MODEL_BLEND_ALPHA) * prior)
+      : prior;
+  const baseSource: "blend" | "prior" = trainedBase != null ? "blend" : "prior";
   const weatherMod = weatherModifier(weather);
   const trafficMod = trafficModifier(traffic);
   const holidayMod = holidayModifier(time.holidayKind);
