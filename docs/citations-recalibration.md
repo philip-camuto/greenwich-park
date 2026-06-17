@@ -75,6 +75,16 @@ would have been wrong — officers ticket less in rain partly because they
 patrol less in rain. Control for patrol and the existing hand-tuned −20 is
 almost exactly right.
 
+**Caveat on the weather statistics.** The GLM uses HC1 (heteroskedasticity-
+robust) standard errors, which treat the 6,342 hourly observations as
+independent. Citations within a day and block are serially correlated, so the
+true confidence intervals are wider than reported — clustering on date would be
+more honest. Four weather terms were tested with no multiplicity control, and
+the freezing/warm thresholds (≤32°F, ≥65°F) are hand-chosen cutpoints. Read
+"only rain is significant" as directional, not a hardened result. It only
+validates the existing hand modifiers (which were not changed), so the stakes
+are low — but don't quote the CIs as if they were cluster-robust.
+
 ## Reproducing
 
 ```bash
