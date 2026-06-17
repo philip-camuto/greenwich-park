@@ -9,6 +9,7 @@ import {
 const {
   nthWeekday,
   lastWeekday,
+  easterSunday,
   classifyHoliday,
   isPublicInSession,
   isPrivateInSession,
@@ -53,6 +54,16 @@ describe("nthWeekday / lastWeekday", () => {
   });
 });
 
+describe("easterSunday (computus)", () => {
+  it("matches known Gregorian Easter dates", () => {
+    expect(easterSunday(2024)).toEqual({ month: 3, day: 31 });
+    expect(easterSunday(2025)).toEqual({ month: 4, day: 20 });
+    expect(easterSunday(2026)).toEqual({ month: 4, day: 5 });
+    expect(easterSunday(2027)).toEqual({ month: 3, day: 28 });
+    expect(easterSunday(2028)).toEqual({ month: 4, day: 16 });
+  });
+});
+
 describe("classifyHoliday", () => {
   function on(year: number, month: number, day: number) {
     return classifyHoliday({ year, month, day, hour: 12, weekday: 0, isoDate: "" });
@@ -69,6 +80,15 @@ describe("classifyHoliday", () => {
     expect(on(2026, 5, 25)?.name).toBe("Memorial Day");
     expect(on(2026, 5, 10)?.name).toBe("Mother's Day");
     expect(on(2026, 6, 21)?.name).toBe("Father's Day");
+  });
+  it("Easter weekend (moveable, computus-derived)", () => {
+    // Easter 2026 = Apr 5; Good Friday Apr 3; Holy Saturday Apr 4.
+    expect(on(2026, 4, 5)).toEqual({ name: "Easter Sunday", kind: "closure" });
+    expect(on(2026, 4, 3)).toEqual({ name: "Good Friday", kind: "observed" });
+    expect(on(2026, 4, 4)).toEqual({ name: "Holy Saturday", kind: "none" });
+    // A different year to prove the date moves: Easter 2027 = Mar 28.
+    expect(on(2027, 3, 28)?.name).toBe("Easter Sunday");
+    expect(on(2027, 3, 26)?.name).toBe("Good Friday");
   });
   it("returns null on non-holidays", () => {
     expect(on(2026, 5, 12)).toBeNull();
