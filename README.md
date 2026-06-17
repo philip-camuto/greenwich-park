@@ -1,5 +1,7 @@
 # Greenwich Park
 
+[![CI](https://github.com/philip-camuto/greenwich-park/actions/workflows/ci.yml/badge.svg)](https://github.com/philip-camuto/greenwich-park/actions/workflows/ci.yml)
+
 Shows you when Greenwich Avenue is busy before you drive there.
 
 A hyperlocal demand predictor for on-street parking on Greenwich Avenue, Greenwich CT. Designed to be opened on a phone in the car: glance, decide, drive.
