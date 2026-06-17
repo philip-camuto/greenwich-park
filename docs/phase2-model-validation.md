@@ -71,3 +71,44 @@ out-of-sample validation** (held-out 2024 deviance 1437.7), and
 when richer data (ParkMobile, camera pilot) arrives — at which point a trained
 model on *true occupancy* labels, rather than the citation proxy, is the real
 Phase 2.
+
+## Addendum — leave-one-year-out CV + bootstrap (2026-06-17)
+
+A single train/test split is one draw of luck, so `analysis/cross_validate.py`
+re-ran the comparison as 3-fold leave-one-year-out CV (hold out each year in
+turn, fit on the other two), pooled out-of-sample, with a 2,000x bootstrap over
+cells for confidence intervals. Four candidates, plus a grid search over the
+data-vs-prior blend weight α (`α·trained-model + (1-α)·hand-prior`).
+
+Pooled out-of-sample Poisson deviance (lower = better):
+
+| Candidate | Deviance | MAE |
+| --- | --- | --- |
+| hand prior only (α=0, no data) | 7295.7 | 64.11 |
+| pure trained model | 5347.0 | 53.86 |
+| shipped heuristic (60/40 blend) | 5274.1 | 53.42 |
+| best blend (α≈0.95) | 5259.7 | 53.68 |
+
+Two conclusions, and the second is the one that matters:
+
+1. **The citation data carries real demand signal.** Every data-driven
+   candidate (5260–5347) crushes the hand-prior-only baseline (7296). The blend
+   curve is monotonic in α up to ~0.95 — more weight on the data is better, right
+   up to nearly pure model. So the data is doing real work; this is not a case of
+   priors carrying the model.
+
+2. **No variant reliably beats another — they are statistically tied.** The
+   bootstrap is decisive: heuristic vs pure model, gap −81.8, 95% CI
+   [−800.7, +679.4], P(model better) = 0.40. Heuristic vs the *best* tuned blend,
+   gap +11.7, CI [−576.0, +535.3], P(better) = 0.53 — a coin flip. The 0.3%
+   "win" of the α=0.95 blend is noise many times smaller than the CI.
+
+So the rigorous verdict matches and strengthens the single-split one: the
+trained model, the shipped heuristic, and an optimally-tuned blend are
+indistinguishable, and all clearly beat a no-data prior. The right call is to
+ship the simplest defensible version (done) and **not** chase a blend retune,
+because the apparent gain does not survive resampling. One mild signal worth
+noting for later: the optimal α (~0.95) is higher than the shipped recipe's
+effective ~0.6, i.e. the current blend may slightly *under*-trust the data — but
+within noise, so not worth changing on this evidence alone. Revisit when
+ParkMobile/occupancy data shrinks the CIs.
