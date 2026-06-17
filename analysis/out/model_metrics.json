@@ -1,0 +1,17 @@
+{
+ "holdout": "train 2022-2023, test 2024",
+ "test_cells": 54,
+ "space": "patrol-adjusted: predicted count = rate * officer-day exposure",
+ "model": {
+  "deviance": 1449.2,
+  "mae": 59.09
+ },
+ "heuristic_fair": {
+  "deviance": 1437.7,
+  "mae": 53.96
+ },
+ "verdict": {
+  "model_ties_or_beats_heuristic": false,
+  "deviance_ratio_model_over_heuristic": 1.008
+ }
+}

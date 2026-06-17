@@ -159,7 +159,7 @@ export default async function Home({
         </aside>
 
         <footer className="mono border-t border-[var(--separator)] pt-4 text-[11px] leading-relaxed text-[var(--label-tertiary)] lg:col-span-2">
-          Public data + heuristics. Not a guarantee of availability.
+          Demand model trained on 21,892 parking citations, plus live signals. Not a guarantee of availability.
         </footer>
       </div>
     </main>
