@@ -20,6 +20,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Python analysis venv ships bundled JS (matplotlib/sklearn) that trips
+    // eslint locally; it is gitignored and never shipped. Don't lint it.
+    "analysis/.venv-gbm/**",
   ]),
 ]);
 

@@ -46,3 +46,7 @@ analysis/data/
 # Python
 __pycache__/
 *.pyc
+analysis/.venv-gbm/
+
+# agent scratch state
+.superpowers/

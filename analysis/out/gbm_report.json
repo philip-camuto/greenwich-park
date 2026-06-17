@@ -1,0 +1,98 @@
+{
+ "method": "forward-chaining CV (train past -> test future)",
+ "folds": [
+  {
+   "train": [
+    2022
+   ],
+   "test": 2023
+  },
+  {
+   "train": [
+    2022,
+    2023
+   ],
+   "test": 2024
+  }
+ ],
+ "note_on_splits": "out/cv_report.json uses leave-one-year-out; this report recomputes GLM and seasonal-mean under the SAME forward-chaining folds so the GBM comparison is apples-to-apples. LOYO numbers are NOT reused.",
+ "exposure_variants": {
+  "E1": "endogenous officer-day offset (identical to shipped GLM)",
+  "E2": "additive Poisson smoother of exposure on C(dow)+cubic-hour; removes per-cell endogeneity but is still ticket-derived (true exogenous patrol exposure needs the schedule FOIA)"
+ },
+ "lgb_params": {
+  "objective": "poisson",
+  "num_leaves": 4,
+  "max_depth": 3,
+  "min_child_samples": 20,
+  "learning_rate": 0.05,
+  "lambda_l1": 1.0,
+  "lambda_l2": 1.0,
+  "min_split_gain": 0.0,
+  "feature_fraction": 1.0,
+  "bagging_fraction": 1.0,
+  "poisson_max_delta_step": 0.7,
+  "verbose": -1,
+  "seed": 12345,
+  "deterministic": true,
+  "force_col_wise": true
+ },
+ "correctness_checks": {
+  "A_exposure_linearity_rate_not_count": {
+   "claim": "pred(2*E) == 2*pred(E) exactly => output is rate x exposure",
+   "pass": true
+  },
+  "B_offset_reconciliation_unregularized": {
+   "claim": "unregularized: sum(rate*E) == sum(actual) => log(E) offset wiring makes output a per-officer-day rate",
+   "raw_ratio_pred_over_actual": 1.0,
+   "pass": true
+  },
+  "context_regularization": {
+   "regularized_shrink_ratio": 0.1549,
+   "note": "intended: heavy L1/L2 biases the rate toward the log(E) baseline on ~54 cells; not a wiring error",
+   "kscaled_heldout_2024_ratio_pred_over_actual": 1.3648
+  }
+ },
+ "cv_per_year_deviance": {
+  "GBM-E1": {
+   "2023": 2560.3,
+   "2024": 1587.0
+  },
+  "GBM-E2": {
+   "2023": 4449.9,
+   "2024": 4792.5
+  },
+  "GLM": {
+   "2023": 2673.2,
+   "2024": 1449.2
+  },
+  "seasonal-mean": {
+   "2023": 2541.7,
+   "2024": 2669.7
+  }
+ },
+ "cv_pooled": {
+  "GBM-E1": {
+   "deviance": 4147.3,
+   "mae": 63.8
+  },
+  "GBM-E2": {
+   "deviance": 9242.5,
+   "mae": 95.04
+  },
+  "GLM": {
+   "deviance": 4122.4,
+   "mae": 66.57
+  },
+  "seasonal-mean": {
+   "deviance": 5211.4,
+   "mae": 64.23
+  }
+ },
+ "gbm_best": "GBM-E1",
+ "gbm_clears_both_baselines": false,
+ "verdict": "GBM does NOT clear both baselines (best overall: GLM). Honest outcome: KEEP THE GLM.",
+ "calibration_plot": "out/gbm_calibration.png",
+ "ships": false,
+ "ship_gate": "no write to trained-coefficients.json without owner go"
+}
