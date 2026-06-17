@@ -163,13 +163,37 @@ describe("schoolModifier", () => {
 
 describe("computeDemand integration", () => {
   it("Saturday 1pm clear 70F yields red", () => {
-    // Saturday 1pm is in the enforcement window, so the base comes from the
-    // trained model (81) + clear/65F weather (+5) = 86.
+    // Saturday 1pm is in the enforcement window, so the base is the CV-tuned
+    // blend of the trained surface (81) and the prior (93): round(0.95*81 +
+    // 0.05*93) = 82, + clear/65F weather (+5) = 87.
     const out = computeDemand(input());
-    expect(out.breakdown.baseSource).toBe("model");
-    expect(out.score).toBe(86);
+    expect(out.breakdown.baseSource).toBe("blend");
+    expect(out.breakdown.base).toBe(82);
+    expect(out.score).toBe(87);
     expect(out.category).toBe("red");
     expect(out.confidence).toBe("high");
+  });
+
+  it("base-source seam: in-window blends trained+prior, out-window is pure prior", () => {
+    // Isolate the base by zeroing every modifier (weather/traffic ok=false).
+    const noMods = {
+      weather: w({ ok: false }),
+      traffic: tr({ ok: false }),
+    };
+    // In window (Sat 1pm): base = round(0.95*81 + 0.05*93) = 82, source "blend".
+    const inWindow = computeDemand(input(noMods));
+    expect(inWindow.breakdown.baseSource).toBe("blend");
+    expect(inWindow.breakdown.base).toBe(82);
+    expect(inWindow.score).toBe(82);
+
+    // Out of window (Sunday 1pm, no enforcement): base = prior SUN[13] = 85,
+    // source "prior" — the trained surface must not leak outside its window.
+    const outWindow = computeDemand(
+      input({ ...noMods, time: tf({ dayOfWeek: 0, isWeekend: true }) }),
+    );
+    expect(outWindow.breakdown.baseSource).toBe("prior");
+    expect(outWindow.breakdown.base).toBe(85);
+    expect(outWindow.score).toBe(85);
   });
 
   it("Tuesday 6am yields green (commuter hours, not Ave hours)", () => {
@@ -187,9 +211,9 @@ describe("computeDemand integration", () => {
     const out = computeDemand(
       input({ weather: w({ condition: "snow", tempF: 28, isDay: true }) }),
     );
-    // base 95 - 40 (snow) - 10 (freezing) = 45 yellow… but snow also kills
-    // demand on Greenwich Ave (boutiques close, brunch tables empty). The
-    // current numbers leave us mid-yellow which is the calibrated answer.
+    // Sat 1pm blended base (82) - 40 (snow) - 10 (freezing) = 32… snow also
+    // kills demand on Greenwich Ave (boutiques close, brunch tables empty), so
+    // landing in green is the calibrated answer.
     expect(out.breakdown.weatherMod).toBe(-50); // -40 snow + -10 freezing
     expect(out.score).toBeLessThan(50);
   });

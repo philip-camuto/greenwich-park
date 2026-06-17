@@ -36,6 +36,16 @@ export function inTrainedWindow(dayOfWeek: number, hour: number): boolean {
   );
 }
 
+// Weight on the trained surface when blending it with the hand prior inside the
+// enforcement window. Leave-one-year-out CV (analysis/out/cv_report.json) picks
+// alpha=0.95 as the shrinkage that generalizes best: pooled out-of-sample
+// deviance 5259.7 at 0.95 vs 5261.8 for the pure model (1.0) and 5274.1 for the
+// 60/40 heuristic. The gap is inside the bootstrap CI, so the practical effect
+// is ~1 point in-window; 0.95 is the validated choice, and wiring it in keeps
+// the runtime consistent with the CV instead of shipping an unvalidated pure
+// model. The remaining 5% rides on getPrior(); see heuristic.ts computeDemand.
+export const MODEL_BLEND_ALPHA = 0.95;
+
 // In-window demand base (0-100) from the trained surface, or null when the
 // slot is outside the model's valid window (caller falls back to getPrior).
 export function trainedBaseScore(

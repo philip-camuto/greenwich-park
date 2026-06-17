@@ -4,6 +4,19 @@
 // demand score (0-100) for that hour-of-week, before weather, traffic,
 // holiday, or special-event adjustments.
 //
+// WHERE THIS MATTERS AT RUNTIME (read before editing in-window cells):
+//   - OUTSIDE the enforcement window (Sundays, before 8am, after 4pm) this
+//     matrix IS the base, at full weight. These are the cells worth tuning.
+//   - INSIDE Mon-Sat 8am-4pm the trained surface (model/trained.ts) supplies
+//     95% of the base and this matrix only 5% (MODEL_BLEND_ALPHA, CV-tuned).
+//     So the in-window cells below move scores by ~1 point at most. The
+//     2026-06-11 citation recalibration touched ONLY in-window cells, which
+//     means it now reaches users through the trained surface, not through
+//     these numbers. The in-window values are kept as the 5% blend anchor and
+//     as a record of the citation shape; do not expect editing them to change
+//     in-window scores. To move the in-window curve, retrain (analysis/
+//     train_model.py) or change MODEL_BLEND_ALPHA.
+//
 // Calibration sources:
 //   1. Hand calibration by a frequent local user (2026-05-12) — still the
 //      sole source for Sundays, evenings, and early mornings.
