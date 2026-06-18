@@ -25,7 +25,7 @@ export function HotspotRow({ id, name, subLabel, score, category }: Props) {
     <Link
       href={`/hotspot/${id}`}
       aria-label={`${name}, demand ${score} of 100`}
-      className="flex min-h-[54px] items-center justify-between gap-4 py-2.5 transition-colors duration-200 hover:bg-[rgba(255,255,255,0.025)] lg:min-h-[58px]"
+      className="flex min-h-[54px] items-center justify-between gap-4 py-2.5 transition-colors duration-200 hover:bg-[var(--hover-fill)] lg:min-h-[58px]"
     >
       <span className="min-w-0">
         <span className="block truncate text-[15px] font-medium text-[var(--label-primary)] lg:text-[16px]">

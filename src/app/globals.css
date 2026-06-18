@@ -24,6 +24,12 @@
   --map-fill-tough: rgba(220, 38, 38, 0.16);
   --map-line: rgba(0, 0, 0, 0.42);
 
+  /* Pressed/hover wash for tappable rows and map blocks. Theme-aware: a
+     dark wash on the light surface, a light wash in dark mode. Using one
+     white overlay for both (the old approach) left the affordance
+     invisible on the light default theme. */
+  --hover-fill: rgba(0, 0, 0, 0.04);
+
   /* System font stacks */
   --font-display:
     -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto,
@@ -55,6 +61,7 @@
     --map-fill-busy: rgba(245, 158, 11, 0.20);
     --map-fill-tough: rgba(239, 68, 68, 0.20);
     --map-line: rgba(255, 255, 255, 0.74);
+    --hover-fill: rgba(255, 255, 255, 0.05);
   }
 }
 
@@ -74,6 +81,11 @@
   --color-map-fill-busy: var(--map-fill-busy);
   --color-map-fill-tough: var(--map-fill-tough);
   --color-map-line: var(--map-line);
+  /* Make Tailwind's default sans (applied to <html> and the font-sans
+     utility) the same stack the body uses, so the page renders one
+     sans-serif family instead of Tailwind's ui-sans-serif default on
+     <html> plus --font-text on <body>. */
+  --font-sans: var(--font-text);
 }
 
 body {

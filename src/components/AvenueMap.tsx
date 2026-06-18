@@ -64,7 +64,7 @@ export function AvenueMap({ category, perBlock, score, verdict }: Props) {
                 y={yN}
                 width={40}
                 height={yS - yN}
-                fill={isActive ? "rgba(255,255,255,0.05)" : "transparent"}
+                fill={isActive ? "var(--hover-fill)" : "transparent"}
                 stroke={isActive ? "var(--label-secondary)" : "transparent"}
                 strokeWidth={2}
                 role="button"
