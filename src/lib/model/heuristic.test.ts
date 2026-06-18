@@ -98,17 +98,24 @@ describe("weatherModifier", () => {
 
 describe("trafficModifier", () => {
   it("none = 0", () => {
-    expect(trafficModifier(tr({ severity: "none" }))).toBe(0);
+    expect(trafficModifier(tr({ severity: "none" }), 8)).toBe(0);
   });
-  it("heavy = +8", () => {
-    expect(trafficModifier(tr({ severity: "heavy" }))).toBe(8);
+  it("heavy in rush hour = +2 (demoted)", () => {
+    expect(trafficModifier(tr({ severity: "heavy" }), 8)).toBe(2);
   });
-  it("closure subtracts 5", () => {
-    expect(trafficModifier(tr({ severity: "moderate", closureNearby: true })))
-      .toBe(0); // +5 - 5
+  it("heavy OUTSIDE rush hour = 0 (gated)", () => {
+    expect(trafficModifier(tr({ severity: "heavy" }), 13)).toBe(0);
+  });
+  it("light no longer nudges, even in rush", () => {
+    expect(trafficModifier(tr({ severity: "light" }), 8)).toBe(0);
+  });
+  it("closure subtracts 5 regardless of hour", () => {
+    // moderate(+1) - closure(5) in rush; closure still applies off-rush.
+    expect(trafficModifier(tr({ severity: "moderate", closureNearby: true }), 8)).toBe(-4);
+    expect(trafficModifier(tr({ severity: "none", closureNearby: true }), 13)).toBe(-5);
   });
   it("ok=false yields 0", () => {
-    expect(trafficModifier(tr({ ok: false, severity: "heavy" }))).toBe(0);
+    expect(trafficModifier(tr({ ok: false, severity: "heavy" }), 8)).toBe(0);
   });
 });
 
@@ -308,11 +315,11 @@ describe("computeDemand integration", () => {
 });
 
 describe("metroNorthModifier", () => {
-  it("returns -8 when ridership is 10%+ above baseline", () => {
-    expect(metroNorthModifier({ ridership: 250000, vsBaseline: 250000 / 220000, ok: true })).toBe(-8);
+  it("returns -4 when ridership is 10%+ above baseline (coarse proxy, lightened)", () => {
+    expect(metroNorthModifier({ ridership: 250000, vsBaseline: 1.2, ok: true })).toBe(-4);
   });
-  it("returns +8 when ridership is 20%+ below baseline", () => {
-    expect(metroNorthModifier({ ridership: 150000, vsBaseline: 0.68, ok: true })).toBe(8);
+  it("returns +4 when ridership is 20%+ below baseline", () => {
+    expect(metroNorthModifier({ ridership: 150000, vsBaseline: 0.68, ok: true })).toBe(4);
   });
   it("returns 0 in the neutral band", () => {
     expect(metroNorthModifier({ ridership: 220000, vsBaseline: 1, ok: true })).toBe(0);
@@ -388,19 +395,23 @@ describe("trafficModifier — TomTom path", () => {
       roadClosure: closure,
     });
   }
-  it("ratio < 0.4 → +8", () => {
-    expect(trafficModifier(tomTomTraffic(0.3))).toBe(8);
+  it("ratio < 0.4 in rush → +2 (demoted from +8)", () => {
+    expect(trafficModifier(tomTomTraffic(0.3), 8)).toBe(2);
   });
-  it("0.4-0.6 → +5", () => {
-    expect(trafficModifier(tomTomTraffic(0.5))).toBe(5);
+  it("0.4-0.6 in rush → +1", () => {
+    expect(trafficModifier(tomTomTraffic(0.5), 8)).toBe(1);
   });
-  it("0.6-0.8 → +2", () => {
-    expect(trafficModifier(tomTomTraffic(0.7))).toBe(2);
+  it("0.6-0.8 in rush → 0 (below the floor now)", () => {
+    expect(trafficModifier(tomTomTraffic(0.7), 8)).toBe(0);
+  });
+  it("heavy congestion OUTSIDE rush → 0 (gated)", () => {
+    expect(trafficModifier(tomTomTraffic(0.3), 13)).toBe(0);
   });
   it("> 0.8 → 0", () => {
-    expect(trafficModifier(tomTomTraffic(0.9))).toBe(0);
+    expect(trafficModifier(tomTomTraffic(0.9), 8)).toBe(0);
   });
-  it("road closure penalizes -5 on top", () => {
-    expect(trafficModifier(tomTomTraffic(0.7, true))).toBe(-3);
+  it("road closure penalizes -5 on top, any hour", () => {
+    expect(trafficModifier(tomTomTraffic(0.3, true), 8)).toBe(-3); // +2 - 5
+    expect(trafficModifier(tomTomTraffic(0.3, true), 13)).toBe(-5); // gated congestion, closure stays
   });
 });

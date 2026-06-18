@@ -58,34 +58,48 @@ export function weatherModifier(weather: WeatherSnapshot): number {
   return mod;
 }
 
-export function trafficModifier(traffic: TrafficSnapshot): number {
+// I-95 congestion is a weak predictor of downtown-Ave retail parking: Ave
+// parkers are local shoppers/diners, not highway through-drivers. The only
+// plausible link is commuter mode-switching during rush, and even that is
+// small — so the congestion bump is demoted (was +8) and gated to rush hours.
+// A nearby road closure cuts demand regardless of hour (harder to reach the
+// Ave). `hour` is local hour-of-day; omitted ⇒ treat as in-window (unit tests).
+function isRushHour(hour: number): boolean {
+  return (hour >= 7 && hour <= 9) || (hour >= 16 && hour <= 19);
+}
+
+export function trafficModifier(
+  traffic: TrafficSnapshot,
+  hour?: number,
+): number {
   // Future-day projections are a synthetic hour-of-day curve shown for context
   // only. The base demand surface already encodes hour-of-day, so scoring the
   // projection would double-count it. Display the reason, contribute nothing.
   if (traffic.projected) return 0;
+  const inRush = hour == null ? true : isRushHour(hour);
   // Prefer TomTom live speed ratio when available; fall back to CT 511 events.
   if (traffic.tomTomOk && typeof traffic.speedRatio === "number") {
     let mod = 0;
-    if (traffic.speedRatio < 0.4) mod = 8;
-    else if (traffic.speedRatio < 0.6) mod = 5;
-    else if (traffic.speedRatio < 0.8) mod = 2;
-    else mod = 0;
+    if (inRush) {
+      if (traffic.speedRatio < 0.4) mod += 2;
+      else if (traffic.speedRatio < 0.6) mod += 1;
+    }
     if (traffic.roadClosure) mod -= 5;
     return mod;
   }
   // Fallback: existing CT 511 event-count logic
   if (!traffic.ok) return 0;
   let mod = 0;
-  switch (traffic.severity) {
-    case "light":
-      mod += 2;
-      break;
-    case "moderate":
-      mod += 5;
-      break;
-    case "heavy":
-      mod += 8;
-      break;
+  if (inRush) {
+    switch (traffic.severity) {
+      case "heavy":
+        mod += 2;
+        break;
+      case "moderate":
+        mod += 1;
+        break;
+      // "light" no longer nudges — below the noise floor for retail parking.
+    }
   }
   if (traffic.closureNearby) mod -= 5;
   return mod;
@@ -95,8 +109,11 @@ export function metroNorthModifier(
   mn: MetroNorthInput | null | undefined,
 ): number {
   if (!mn || !mn.ok || mn.vsBaseline == null) return 0;
-  if (mn.vsBaseline > 1.1) return -8;   // more train commuters → fewer drivers
-  if (mn.vsBaseline < 0.8) return 8;    // fewer train commuters → more drivers
+  // ±4, not ±8: this is systemwide MNR ridership (all three lines), a coarse
+  // proxy only loosely linked to who parks on the Ave. No finer public data
+  // exists, so keep it but don't let it swing the score like a local signal.
+  if (mn.vsBaseline > 1.1) return -4;   // more train commuters → fewer drivers
+  if (mn.vsBaseline < 0.8) return 4;    // fewer train commuters → more drivers
   return 0;
 }
 
@@ -181,7 +198,7 @@ export function computeDemand(input: ModelInput): DemandScore {
       : prior;
   const baseSource: "blend" | "prior" = trainedBase != null ? "blend" : "prior";
   const weatherMod = weatherModifier(weather);
-  const trafficMod = trafficModifier(traffic);
+  const trafficMod = trafficModifier(traffic, time.hour);
   const holidayMod = holidayModifier(time.holidayKind);
   const schoolMod = schoolModifier(time);
 

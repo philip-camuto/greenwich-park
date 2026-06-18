@@ -36,12 +36,18 @@ import type { MetroNorthInput } from "@/lib/model/types";
 const ENDPOINT = "https://data.ny.gov/resource/sayj-mze2.json";
 const REVALIDATE_SECONDS = 3600; // hourly is plenty — dataset updates daily
 
-// ~120 calendar days yields ~17 samples per day-of-week: enough for a stable
-// median while still tracking the current ridership regime.
+// Fetch ~120 calendar days so every day-of-week has plenty of samples even
+// with reporting gaps. We don't median over all of them though — see
+// MEDIAN_SAMPLES.
 const WINDOW_DAYS = 120;
-// A day-of-week needs at least this many samples in the window before we trust
-// its median. Below this the DOW reads "data unavailable" rather than anchoring
-// the anomaly comparison on noise.
+// Median over only the most recent N same-DOW samples (~8 weeks). A full
+// 120-day median lags the season: in June its weekend baseline is still
+// dragged down by winter, so every summer weekend reads "unusually high."
+// ~8 recent samples tracks the current season while staying stable enough to
+// still flag a genuine one-off spike.
+const MEDIAN_SAMPLES = 8;
+// A day-of-week needs at least this many samples before we trust its median.
+// Below this the DOW reads "data unavailable" rather than anchoring on noise.
 const MIN_SAMPLES_PER_DOW = 4;
 
 export type MetroNorthRidership = {
@@ -101,7 +107,9 @@ export async function fetchMetroNorthRidership(): Promise<MetroNorthRidership> {
     const medianByDow: Record<number, number> = {};
     for (const [dowKey, vals] of Object.entries(byDow)) {
       const dow = Number(dowKey);
-      const peers = dow === latest.dow ? vals.slice(1) : vals;
+      // vals are date DESC. Drop the latest day from its own DOW (don't judge
+      // it against itself), then median over only the most recent N samples.
+      const peers = (dow === latest.dow ? vals.slice(1) : vals).slice(0, MEDIAN_SAMPLES);
       if (peers.length >= MIN_SAMPLES_PER_DOW) {
         medianByDow[dow] = median(peers);
       }

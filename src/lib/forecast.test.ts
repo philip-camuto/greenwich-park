@@ -219,7 +219,7 @@ describe("buildForecast — ridership per slot", () => {
       metroNorthData: MTA_DATA,
       metroNorthNow: anomalyNow,
     });
-    expect(f.points[0].breakdown?.metroNorthMod).toBe(-8); // live "unusually high"
+    expect(f.points[0].breakdown?.metroNorthMod).toBe(-4); // live "unusually high"
     expect(f.points[1].breakdown?.metroNorthMod).toBe(0); // future slots: typical
   });
 });
