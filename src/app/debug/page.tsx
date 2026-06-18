@@ -31,14 +31,14 @@ export default async function DebugPage({
   ]);
 
   return (
-    <main className="min-h-dvh bg-[var(--bg)] text-[var(--fg)] px-6 py-8 mono text-xs leading-relaxed">
+    <main className="min-h-dvh bg-[var(--bg-group)] text-[var(--label-primary)] px-6 py-8 mono text-xs leading-relaxed">
       <header className="flex items-center justify-between mb-8">
-        <h1 className="text-[10px] tracking-[0.25em] uppercase text-[var(--muted)]">
+        <h1 className="text-[10px] tracking-[0.25em] uppercase text-[var(--label-tertiary)]">
           Greenwich Park / Debug
         </h1>
         <Link
           href="/"
-          className="text-[10px] tracking-[0.25em] uppercase text-[var(--muted)] hover:text-[var(--fg)]"
+          className="text-[10px] tracking-[0.25em] uppercase text-[var(--label-tertiary)] hover:text-[var(--label-primary)]"
         >
           ← Back
         </Link>
@@ -134,7 +134,7 @@ export default async function DebugPage({
 
       <Section title="Forecast (next 4h, 15-min steps)">
         <table className="w-full text-[11px]">
-          <thead className="text-[var(--muted)]">
+          <thead className="text-[var(--label-tertiary)]">
             <tr>
               <th className="text-left py-1">Time (UTC)</th>
               <th className="text-left py-1">Local hr</th>
@@ -148,8 +148,8 @@ export default async function DebugPage({
                 key={p.timestamp}
                 className={
                   forecast.bestTime?.timestamp === p.timestamp
-                    ? "text-[var(--fg)]"
-                    : "text-[var(--muted)]"
+                    ? "text-[var(--label-primary)]"
+                    : "text-[var(--label-tertiary)]"
                 }
               >
                 <td className="py-0.5">{p.timestamp.slice(0, 16)}</td>
@@ -161,7 +161,7 @@ export default async function DebugPage({
           </tbody>
         </table>
         {forecast.bestTime && (
-          <p className="mt-3 text-[var(--muted)]">
+          <p className="mt-3 text-[var(--label-tertiary)]">
             best window: localHour={forecast.bestTime.localHour}, score=
             {forecast.bestTime.score}
           </p>
@@ -170,7 +170,7 @@ export default async function DebugPage({
 
       <Section title={`Last ${recent.length} observations`}>
         <table className="w-full text-[11px]">
-          <thead className="text-[var(--muted)]">
+          <thead className="text-[var(--label-tertiary)]">
             <tr>
               <th className="text-left py-1">When</th>
               <th className="text-right py-1">Score</th>
@@ -196,12 +196,12 @@ export default async function DebugPage({
       </Section>
 
       <Section title="Manual actions">
-        <p className="text-[var(--muted)] mb-2">
+        <p className="text-[var(--label-tertiary)] mb-2">
           Force a new ingest (writes a row, bypasses 15-min cache):
         </p>
         <a
           href="/api/cron/ingest"
-          className="inline-block border border-[var(--hairline)] px-3 py-2 text-[10px] tracking-[0.25em] uppercase hover:bg-[var(--hairline)]"
+          className="inline-block border border-[var(--separator)] px-3 py-2 text-[10px] tracking-[0.25em] uppercase hover:bg-[var(--separator)]"
         >
           POST /api/cron/ingest
         </a>
@@ -219,7 +219,7 @@ function Section({
 }) {
   return (
     <section className="mb-8">
-      <h2 className="text-[10px] tracking-[0.25em] uppercase text-[var(--muted)] mb-3 pb-2 border-b border-[var(--hairline)]">
+      <h2 className="text-[10px] tracking-[0.25em] uppercase text-[var(--label-tertiary)] mb-3 pb-2 border-b border-[var(--separator)]">
         {title}
       </h2>
       <div className="space-y-1">{children}</div>
@@ -236,7 +236,7 @@ function Field({
 }) {
   return (
     <div className="grid grid-cols-[16rem_1fr] gap-2">
-      <span className="text-[var(--muted)]">{label}</span>
+      <span className="text-[var(--label-tertiary)]">{label}</span>
       <span>{value === null || value === undefined ? "-" : String(value)}</span>
     </div>
   );
