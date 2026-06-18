@@ -47,3 +47,4 @@ analysis/data/
 __pycache__/
 *.pyc
 analysis/.venv-gbm/
+.gstack/
