@@ -87,17 +87,21 @@ OLD_PRIORS = [
 ]
 
 # Closure-grade holidays with ~zero enforcement; excluded so they don't drag
-# cell means (the app handles holidays via holidayMod).
+# cell means (the app handles holidays via holidayMod). Also excludes
+# Black Friday (normal enforcement + a once-a-year retail spike that would
+# inflate the late-Nov Friday baseline, plus the runtime adds its own
+# holidayMod spike that day = double-count) and Dec 24 / Dec 31 (grace-
+# enforcement days that deflate those cells).
 US_HOLIDAYS = {
     "2022-01-01", "2022-01-17", "2022-02-21", "2022-05-30", "2022-06-20",
     "2022-07-04", "2022-09-05", "2022-10-10", "2022-11-11", "2022-11-24",
-    "2022-12-25", "2022-12-26",
+    "2022-11-25", "2022-12-24", "2022-12-25", "2022-12-26", "2022-12-31",
     "2023-01-01", "2023-01-02", "2023-01-16", "2023-02-20", "2023-05-29",
     "2023-06-19", "2023-07-04", "2023-09-04", "2023-10-09", "2023-11-10",
-    "2023-11-23", "2023-12-25",
+    "2023-11-23", "2023-11-24", "2023-12-24", "2023-12-25", "2023-12-31",
     "2024-01-01", "2024-01-15", "2024-02-19", "2024-05-27", "2024-06-19",
     "2024-07-04", "2024-09-02", "2024-10-14", "2024-11-11", "2024-11-28",
-    "2024-12-25",
+    "2024-11-29", "2024-12-24", "2024-12-25", "2024-12-31",
 }
 
 
@@ -233,13 +237,37 @@ def poisson_deviance(y, mu):
     return float(2.0 * np.sum(term - (y - mu)))
 
 
+# Score the p95 in-window rate reads as. Anchors the top of the 0-100 demand
+# scale to the busy-but-not-freak cell (red zone), matching the old prior peak
+# (95) so green/yellow/red banding is preserved. A rate above the p95 clamps
+# toward 100 at runtime instead of letting one noisy peak cell rescale the
+# whole surface.
+SCORE_HI = 95.0
+
+
 def map_grid_to_scores(rate_grid):
-    """Affine-map the demand-rate grid onto the priors' in-window 0-100 range."""
+    """Affine-map the demand-rate grid onto a 0-100 demand scale, anchored so
+    rate 0 -> score 0 and the p95 in-window rate -> SCORE_HI.
+
+    Two deliberate choices (TODO T1):
+      * floor at rate 0 -> 0 (not the old prior's min of 30), so a genuinely
+        dead in-window hour (Mon 8am, Sat 4pm) can read honestly empty instead
+        of flooring at ~30.
+      * top anchored to the p95 quantile of in-window cell rates, NOT the max,
+        so one noisy peak cell can't rescale all 54 in-window scores. The rare
+        cell above p95 clamps toward 100 (the runtime clamps to [0,100]).
+
+    Emitted as the same {mu_min, mu_max, score_lo, score_hi} affine the runtime
+    already applies: score = score_lo + (rate - mu_min)/(mu_max - mu_min) *
+    (score_hi - score_lo). With mu_min=0 and score_lo=0 this is
+    rate / p95_rate * SCORE_HI.
+    """
     win = [(d, h) for d in ENFORCED_DOWS for h in WINDOW_HOURS]
     rates = [rate_grid[d][h] for d, h in win]
-    rmin, rmax = min(rates), max(rates)
-    old_in = [OLD_PRIORS[d][h] for d, h in win]
-    return {"mu_min": rmin, "mu_max": rmax, "score_lo": min(old_in), "score_hi": max(old_in)}
+    p95 = float(np.percentile(rates, 95))
+    # guard the degenerate flat-surface case
+    p95 = p95 if p95 > 0 else (max(rates) or 1.0)
+    return {"mu_min": 0.0, "mu_max": p95, "score_lo": 0.0, "score_hi": SCORE_HI}
 
 
 def main():

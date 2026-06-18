@@ -75,16 +75,19 @@ DATA_WEIGHT_SHOULDER = 0.3
 
 US_HOLIDAYS = {
     # closure-grade days with zero/near-zero enforcement; excluded so they
-    # don't drag down cell means (the app handles holidays via holidayMod)
+    # don't drag down cell means (the app handles holidays via holidayMod).
+    # Also excludes Black Friday (normal enforcement + once-a-year retail
+    # spike that inflates the late-Nov Friday baseline, plus a runtime
+    # holidayMod double-count) and Dec 24 / Dec 31 (grace days that deflate).
     "2022-01-01", "2022-01-17", "2022-02-21", "2022-05-30", "2022-06-20",
     "2022-07-04", "2022-09-05", "2022-10-10", "2022-11-11", "2022-11-24",
-    "2022-12-25", "2022-12-26",
+    "2022-11-25", "2022-12-24", "2022-12-25", "2022-12-26", "2022-12-31",
     "2023-01-01", "2023-01-02", "2023-01-16", "2023-02-20", "2023-05-29",
     "2023-06-19", "2023-07-04", "2023-09-04", "2023-10-09", "2023-11-10",
-    "2023-11-23", "2023-12-25",
+    "2023-11-23", "2023-11-24", "2023-12-24", "2023-12-25", "2023-12-31",
     "2024-01-01", "2024-01-15", "2024-02-19", "2024-05-27", "2024-06-19",
     "2024-07-04", "2024-09-02", "2024-10-14", "2024-11-11", "2024-11-28",
-    "2024-12-25",
+    "2024-11-29", "2024-12-24", "2024-12-25", "2024-12-31",
 }
 
 
