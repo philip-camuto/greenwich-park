@@ -7,7 +7,10 @@ import { fetchGreenwichTraffic } from "@/lib/sources/ctTravelSmart";
 import { fetchGreenwichWeather } from "@/lib/sources/openWeather";
 import { computeTimeFeatures } from "@/lib/sources/timeFeatures";
 import { fetchTomTomFlow } from "@/lib/sources/tomTom";
-import { fetchMetroNorthRidership } from "@/lib/sources/metroNorth";
+import {
+  fetchMetroNorthRidership,
+  metroNorthCurrentInput,
+} from "@/lib/sources/metroNorth";
 import { fetchMetroNorthAlerts } from "@/lib/sources/metroNorthAlerts";
 import { fetchAggregatedSpecialEvents, eventsFiringAt } from "@/lib/sources/events";
 
@@ -45,6 +48,10 @@ export async function runIngest(): Promise<Observation> {
   const now = new Date();
   const firingEvents = eventsFiringAt(aggregatedEvents, now);
 
+  // Derive the live ridership anomaly: most recent actual day vs its own
+  // day-of-week trailing median (see metroNorth.ts).
+  const mtaInput = metroNorthCurrentInput(mta);
+
   // Merge TomTom into the traffic snapshot
   const mergedTraffic = {
     ...traffic,
@@ -61,9 +68,41 @@ export async function runIngest(): Promise<Observation> {
     traffic: mergedTraffic,
     time,
     specialEvents: firingEvents,
-    metroNorth: mta,
+    metroNorth: mtaInput,
     metroNorthAlerts: mnrAlerts,
   });
+
+  // Surface a degraded ingest. The row is still persisted (low-confidence
+  // rows are training signal — see below), but a silently-dark feed is an
+  // operational problem: emit a structured log naming every source that
+  // returned ok:false so a degraded run is visible in logs/alerting rather
+  // than only discoverable by querying confidence after the fact.
+  // Each source object carries its own `ok` flag (false on upstream error
+  // or missing key). Special events have no ok flag — they degrade to an
+  // empty list internally — so they aren't tracked here.
+  const failedSources = [
+    !weather.ok && "weather",
+    !traffic.ok && "traffic",
+    !tomTom.ok && "tomTom",
+    !mta.ok && "metroNorth",
+    !mnrAlerts.ok && "metroNorthAlerts",
+  ].filter((s): s is string => typeof s === "string");
+
+  if (failedSources.length > 0) {
+    // Matches the codebase's "[module] message:" + payload logging pattern
+    // (see src/lib/sources/*). console.error (not warn) because one or more
+    // live feeds went dark, which lowers the confidence of every row written
+    // until it recovers.
+    console.error("[ingest] degraded observation — source(s) failed:", {
+      failedSources,
+      failedCount: failedSources.length,
+      totalSources: 5,
+      confidence: demand.confidence,
+      category: demand.category,
+      score: demand.score,
+      observedAt: now.toISOString(),
+    });
+  }
 
   // Always insert, even when every source returned ok:false. Low-confidence
   // rows are training-time signal ("data was unavailable at this timestamp")
@@ -114,10 +153,10 @@ export async function runIngest(): Promise<Observation> {
       trafficFreeFlowSpeedMph: tomTom.freeFlowSpeedMph,
       trafficSpeedRatio: tomTom.speedRatio,
       trafficTomTomOk: tomTom.ok,
-      // MTA Metro-North ridership (new in v2 sources).
-      mtaRidership: mta.ridership,
-      mtaVsBaseline: mta.vsBaseline,
-      mtaOk: mta.ok,
+      // MTA Metro-North ridership (latest actual day vs trailing same-DOW median).
+      mtaRidership: mtaInput.ridership,
+      mtaVsBaseline: mtaInput.vsBaseline,
+      mtaOk: mtaInput.ok,
       metroNorthMod: demand.breakdown.metroNorthMod,
       // MTA real-time alerts (NH Line family).
       mnrAlertsStatus: mnrAlerts.newHavenLineStatus,

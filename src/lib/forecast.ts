@@ -13,7 +13,12 @@ import {
   type HourlyForecastPoint,
 } from "@/lib/sources/openWeather";
 import { fetchGreenwichTraffic } from "@/lib/sources/ctTravelSmart";
-import { fetchMetroNorthRidership } from "@/lib/sources/metroNorth";
+import {
+  fetchMetroNorthRidership,
+  metroNorthCurrentInput,
+  metroNorthForecastInput,
+  type MetroNorthRidership,
+} from "@/lib/sources/metroNorth";
 import { fetchMetroNorthAlerts } from "@/lib/sources/metroNorthAlerts";
 import {
   eventsFiringAt,
@@ -110,7 +115,11 @@ export function projectTraffic(
   i: number,
   totalSteps: number,
 ): TrafficSnapshot {
-  if (!base.ok || i === 0) return base;
+  if (i === 0) return base;
+  // A failed live snapshot stays flat. A future-day `projected` snapshot is
+  // synthetic by design, so we still build its hour-of-day curve even though
+  // base.ok is false (it scores 0 via trafficModifier — display only).
+  if (!base.ok && !base.projected) return base;
   const current = base.speedRatio ?? 1.0;
   const target = targetSpeedRatio(hour, dayOfWeek);
   const blend = Math.min(1, i / Math.max(1, totalSteps - 1));
@@ -194,7 +203,8 @@ export function buildForecast({
   currentWeather,
   traffic,
   hourly,
-  metroNorth,
+  metroNorthData,
+  metroNorthNow,
   metroNorthAlerts,
   aggregatedEvents,
 }: {
@@ -202,7 +212,13 @@ export function buildForecast({
   currentWeather: WeatherSnapshot;
   traffic: TrafficSnapshot;
   hourly: HourlyForecastPoint[];
-  metroNorth?: MetroNorthInput | null;
+  // Ridership is per-day, not per-hour. Each slot's reading is derived from
+  // this trailing-window data by the slot's own day-of-week (predicted =
+  // recent same-weekday median → "typical"). `metroNorthNow`, when supplied,
+  // overrides slot 0 (the literal "now") with the live anomaly reading so the
+  // forecast strip's current slot matches the main panel.
+  metroNorthData?: MetroNorthRidership | null;
+  metroNorthNow?: MetroNorthInput | null;
   metroNorthAlerts?: MetroNorthAlertsInput | null;
   aggregatedEvents?: SpecialEvent[];
 }): Forecast {
@@ -228,12 +244,20 @@ export function buildForecast({
       FORECAST_POINT_COUNT,
     );
     const specialEvents = eventsFiringAt(events, t);
+    // Slot 0 = "now" → live anomaly when provided; every other slot → the
+    // predicted typical reading for that slot's day-of-week.
+    const slotMetroNorth: MetroNorthInput | null =
+      i === 0 && metroNorthNow
+        ? metroNorthNow
+        : metroNorthData
+          ? metroNorthForecastInput(metroNorthData, time.dayOfWeek)
+          : null;
     const demand = computeDemand({
       weather,
       traffic: slotTraffic,
       time,
       specialEvents,
-      metroNorth,
+      metroNorth: slotMetroNorth,
       metroNorthAlerts,
     });
     points.push({
@@ -246,7 +270,7 @@ export function buildForecast({
       inputs: {
         weather,
         traffic: slotTraffic,
-        metroNorth: metroNorth ?? null,
+        metroNorth: slotMetroNorth,
         metroNorthAlerts: metroNorthAlerts ?? null,
         eventCount: specialEvents.length,
         dayOfWeek: time.dayOfWeek,
@@ -269,7 +293,7 @@ export function buildForecast({
 export async function buildForecastForGreenwich(
   startAt: Date = new Date(),
 ): Promise<Forecast> {
-  const [traffic, hourly, metroNorth, metroNorthAlerts, aggregatedEvents] =
+  const [traffic, hourly, mtaData, metroNorthAlerts, aggregatedEvents] =
     await Promise.all([
       fetchGreenwichTraffic(),
       fetchGreenwichHourlyForecast(),
@@ -297,18 +321,25 @@ export async function buildForecastForGreenwich(
         fetchedAt: new Date().toISOString(),
         ok: false,
       };
-  // Future-day traffic snapshot is meaningless (we have no traffic forecast).
-  // Mark it ok:false so the heuristic drops confidence accordingly.
+  // We have no live traffic forecast. For a future day we still show a
+  // synthetic hour-of-day curve (projectTraffic) labelled "(projected)", but
+  // mark ok:false so confidence stays honest and `projected:true` so it scores
+  // 0 (display only). speedRatio 1.0 anchors the projection to a neutral
+  // free-flow start rather than carrying today's live congestion forward.
   const isFuture = startAt.getTime() - Date.now() > 60 * 60 * 1000;
   const trafficForDay: TrafficSnapshot = isFuture
-    ? { ...traffic, ok: false }
+    ? { ...traffic, ok: false, tomTomOk: false, projected: true, speedRatio: 1.0 }
     : traffic;
+  // On the today strip, slot 0 should reflect the live ridership anomaly (same
+  // as the main panel). On a future-day view there is no "now" to anchor.
+  const metroNorthNow = isFuture ? null : metroNorthCurrentInput(mtaData);
   return buildForecast({
     now: startAt,
     currentWeather,
     traffic: trafficForDay,
     hourly,
-    metroNorth,
+    metroNorthData: mtaData,
+    metroNorthNow,
     metroNorthAlerts,
     aggregatedEvents,
   });

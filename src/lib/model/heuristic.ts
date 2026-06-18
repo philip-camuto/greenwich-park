@@ -59,6 +59,10 @@ export function weatherModifier(weather: WeatherSnapshot): number {
 }
 
 export function trafficModifier(traffic: TrafficSnapshot): number {
+  // Future-day projections are a synthetic hour-of-day curve shown for context
+  // only. The base demand surface already encodes hour-of-day, so scoring the
+  // projection would double-count it. Display the reason, contribute nothing.
+  if (traffic.projected) return 0;
   // Prefer TomTom live speed ratio when available; fall back to CT 511 events.
   if (traffic.tomTomOk && typeof traffic.speedRatio === "number") {
     let mod = 0;

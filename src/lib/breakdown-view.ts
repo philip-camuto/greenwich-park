@@ -78,7 +78,16 @@ function trafficReason(
   tomTomOk: boolean | null,
   speedRatio: number | null,
   severity: string | null,
+  projected: boolean = false,
 ): string {
+  // Future-day slots: synthetic hour-of-day curve, labelled so it never reads
+  // as a live measurement. Scores 0 (see trafficModifier).
+  if (projected && speedRatio != null) {
+    if (speedRatio >= 0.9) return "typically free-flowing I-95 (projected)";
+    if (speedRatio >= 0.7) return "typically mild I-95 slowing (projected)";
+    if (speedRatio >= 0.5) return "typical I-95 congestion (projected)";
+    return "typically heavy I-95 (projected)";
+  }
   if (tomTomOk && speedRatio != null) {
     if (speedRatio >= 0.9) return "free flow on I-95";
     if (speedRatio >= 0.7) return "I-95 mildly slow";
@@ -106,10 +115,12 @@ function eventReason(count: number): string {
 }
 
 function mtaReason(ok: boolean, vsBaseline: number | null): string {
+  // vsBaseline is now ridership vs the recent same-weekday median, so these
+  // read as anomalies against the current norm, not against a frozen number.
   if (!ok || vsBaseline == null) return "data unavailable";
-  if (vsBaseline > 1.1) return "ridership well above baseline";
-  if (vsBaseline < 0.8) return "ridership well below baseline";
-  return "ridership near baseline";
+  if (vsBaseline > 1.1) return "ridership unusually high";
+  if (vsBaseline < 0.8) return "ridership unusually low";
+  return "typical ridership";
 }
 
 function alertsReason(ok: boolean, status: string | null): string {
@@ -209,6 +220,7 @@ export function breakdownViewFromForecastPoint(point: ForecastPoint): BreakdownV
         traffic.tomTomOk ?? false,
         traffic.speedRatio ?? null,
         traffic.severity,
+        traffic.projected ?? false,
       ),
     },
     {

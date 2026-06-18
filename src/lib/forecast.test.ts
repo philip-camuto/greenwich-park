@@ -12,7 +12,17 @@ import {
 import type {
   HourlyForecastPoint,
 } from "./sources/openWeather";
-import type { TrafficSnapshot, WeatherSnapshot } from "./model/types";
+import type { MetroNorthInput, TrafficSnapshot, WeatherSnapshot } from "./model/types";
+import type { MetroNorthRidership } from "./sources/metroNorth";
+
+// Every DOW has a trusted median; weekday 250k, weekend 120k.
+const MTA_DATA: MetroNorthRidership = {
+  latestDate: "2026-06-15T00:00:00.000",
+  latestRidership: 250_000,
+  medianByDow: { 0: 120_000, 1: 250_000, 2: 250_000, 3: 250_000, 4: 250_000, 5: 250_000, 6: 120_000 },
+  ok: true,
+  fetchedAt: "2026-06-15T12:00:00Z",
+};
 
 const { localHourKey } = __test__;
 
@@ -173,6 +183,63 @@ describe("buildForecast", () => {
       expect(p.score).toBeGreaterThanOrEqual(0);
       expect(p.score).toBeLessThanOrEqual(100);
     }
+  });
+});
+
+describe("buildForecast — ridership per slot", () => {
+  const now = new Date("2026-05-09T16:00:00Z"); // Sat 12:00pm ET
+  const hourly: HourlyForecastPoint[] = [
+    { timestamp: "2026-05-09T12:00", tempF: 75, condition: "clear", precipitationIn: 0 },
+  ];
+
+  it("predicts a typical ridership (modifier 0) for forecast slots", () => {
+    const f = buildForecast({
+      now,
+      currentWeather: w(),
+      traffic: tr(),
+      hourly,
+      metroNorthData: MTA_DATA,
+    });
+    // Every slot's ridership is the day's median → vsBaseline 1.0 → no nudge,
+    // never a carried-forward -8.
+    for (const p of f.points) {
+      expect(p.breakdown?.metroNorthMod).toBe(0);
+      expect(p.inputs?.metroNorth?.ok).toBe(true);
+      expect(p.inputs?.metroNorth?.vsBaseline).toBe(1.0);
+    }
+  });
+
+  it("lets metroNorthNow override slot 0 (the live anomaly) only", () => {
+    const anomalyNow: MetroNorthInput = { ridership: 320_000, vsBaseline: 1.3, ok: true };
+    const f = buildForecast({
+      now,
+      currentWeather: w(),
+      traffic: tr(),
+      hourly,
+      metroNorthData: MTA_DATA,
+      metroNorthNow: anomalyNow,
+    });
+    expect(f.points[0].breakdown?.metroNorthMod).toBe(-8); // live "unusually high"
+    expect(f.points[1].breakdown?.metroNorthMod).toBe(0); // future slots: typical
+  });
+});
+
+describe("buildForecast — projected future traffic", () => {
+  const now = new Date("2026-05-09T16:00:00Z");
+  const hourly: HourlyForecastPoint[] = [
+    { timestamp: "2026-05-09T12:00", tempF: 75, condition: "clear", precipitationIn: 0 },
+  ];
+
+  it("builds the hour-of-day curve but contributes 0 to the score", () => {
+    const projected = tr({ ok: false, projected: true, speedRatio: 1.0, tomTomOk: false });
+    const f = buildForecast({ now, currentWeather: w(), traffic: projected, hourly });
+    for (const p of f.points) {
+      expect(p.breakdown?.trafficMod).toBe(0); // display-only, no double-count
+      expect(p.inputs?.traffic.projected).toBe(true);
+    }
+    // The synthetic curve still moves across slots (not frozen at the start).
+    const ratios = f.points.map((p) => p.inputs?.traffic.speedRatio ?? 1);
+    expect(new Set(ratios).size).toBeGreaterThan(1);
   });
 });
 

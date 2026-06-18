@@ -44,6 +44,11 @@ export type TrafficSnapshot = {
   speedRatio?: number | null;
   roadClosure?: boolean;
   tomTomOk?: boolean;
+  // Set on future-day forecast slots: speedRatio is a synthetic hour-of-day
+  // projection, not a live reading. Display-only — contributes 0 to the score
+  // (trafficModifier short-circuits) so it can't double-count the hour-of-day
+  // pattern the base surface already encodes.
+  projected?: boolean;
 };
 
 export type HolidayKind = "closure" | "retail-spike" | "observed" | "none";
