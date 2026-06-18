@@ -108,7 +108,7 @@ export function DaySegmentedControl() {
         <button
           type="button"
           onClick={() => setPickerOpen(true)}
-          className="flex min-h-[40px] flex-1 items-center justify-between rounded-[8px] border border-[var(--separator)] bg-[var(--bg-surface)] px-3 text-left text-[14px] font-semibold text-[var(--label-primary)]"
+          className="flex min-h-[44px] flex-1 items-center justify-between rounded-[8px] border border-[var(--separator)] bg-[var(--bg-surface)] px-3 text-left text-[14px] font-semibold text-[var(--label-primary)]"
         >
           <span>{plannerLabel(current, currentTime)}</span>
           <span
@@ -213,7 +213,7 @@ function DayStepButton({
       type="button"
       onClick={onClick}
       aria-label={isLeft ? "Previous day" : "Next day"}
-      className="flex min-h-[40px] w-10 items-center justify-center rounded-[8px] border border-[var(--separator)] bg-[var(--bg-surface)] text-[var(--label-secondary)] transition-colors hover:text-[var(--label-primary)] lg:min-h-[34px]"
+      className="flex min-h-[44px] w-11 items-center justify-center rounded-[8px] border border-[var(--separator)] bg-[var(--bg-surface)] text-[var(--label-secondary)] transition-colors hover:text-[var(--label-primary)] lg:min-h-[34px] lg:w-10"
     >
       <svg
         width="14"

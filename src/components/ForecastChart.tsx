@@ -439,7 +439,7 @@ export function ForecastChart({ points, bestTime, onPinChange }: Props) {
             <text
               x={Math.max(M.l + 12, Math.min(W - M.r - 12, dotX(bestIdx)))}
               y={barY - 7}
-              fontSize="8.5"
+              fontSize="11"
               fontWeight={600}
               fontFamily="var(--font-mono), ui-monospace, monospace"
               fill="var(--label-secondary)"
