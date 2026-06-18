@@ -1,6 +1,8 @@
 // Ticketmaster Discovery API — events near Greenwich (postalCode 06830,
-// 25mi radius). Greenwich itself has no Ticketmaster venues; the radius
-// catches Stamford/Mohegan Sun-adjacent shows. Will return [] most days.
+// 10mi radius). Greenwich has no Ticketmaster venues, so every hit is
+// out-of-town; the old 25mi radius pulled in Mohegan Sun / far-Stamford shows
+// that have zero bearing on Greenwich Ave parking. 10mi keeps only the nearest
+// (downtown-Stamford-ish) venues. Will return [] most days.
 
 import type { SpecialEvent } from "@/lib/model/types";
 import { fetchWithTimeout } from "@/lib/utils/fetch";

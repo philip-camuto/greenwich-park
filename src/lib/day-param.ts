@@ -51,7 +51,7 @@ function defaultAnchorTime(now: Date): string {
   return `${String(clamped).padStart(2, "0")}:00`;
 }
 
-function greenwichLocalTimeOnDate(isoDate: string, time: string): Date {
+export function greenwichLocalTimeOnDate(isoDate: string, time: string): Date {
   // Compute the UTC moment that corresponds to a Greenwich-local clock time.
   // We probe early afternoon UTC, read the local hour, derive the UTC offset,
   // and let Date.UTC handle day rollover for late evening local times.

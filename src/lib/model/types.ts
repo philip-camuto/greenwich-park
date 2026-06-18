@@ -83,6 +83,7 @@ export type SpecialEvent = {
   name: string;
   demandBoost: number; // +/- adjustment to score
   startsAt?: string; // ISO 8601 UTC
+  endsAt?: string; // ISO 8601 UTC — when known, the event fires across its span
   source?: "eventbrite" | "ticketmaster" | "town-ical" | "manual";
   url?: string;
 };

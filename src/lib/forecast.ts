@@ -299,7 +299,7 @@ export async function buildForecastForGreenwich(
       fetchGreenwichHourlyForecast(),
       fetchMetroNorthRidership(),
       fetchMetroNorthAlerts(),
-      fetchAggregatedSpecialEvents(),
+      fetchAggregatedSpecialEvents(startAt),
     ]);
   const currentSlot = hourly.find((h) => h.timestamp === localHourKey(startAt));
   const currentWeather: WeatherSnapshot = currentSlot

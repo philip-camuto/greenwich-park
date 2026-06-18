@@ -49,6 +49,7 @@ type EventbriteEvent = {
   id: string;
   name?: { text?: string };
   start?: { utc?: string };
+  end?: { utc?: string };
   url?: string;
   capacity?: number | null;
 };
@@ -60,6 +61,9 @@ function eventbriteToSpecial(e: EventbriteEvent): SpecialEvent {
     name: e.name?.text ?? "Eventbrite event",
     demandBoost: boostFromCapacity(e.capacity),
     startsAt,
+    // When Eventbrite gives an end time, carry it so the event stops firing
+    // once it's over (eventsFiringAt fires across [start, end] + pad).
+    endsAt: e.end?.utc,
     source: "eventbrite",
     url: e.url,
   };

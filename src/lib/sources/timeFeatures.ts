@@ -53,7 +53,7 @@ function localParts(at: Date): LocalParts {
 }
 
 // nth occurrence of a weekday in a month (n is 1-indexed).
-function nthWeekday(year: number, month: number, weekday: number, n: number): number {
+export function nthWeekday(year: number, month: number, weekday: number, n: number): number {
   // Find the first instance of `weekday` in this month, then add 7*(n-1) days.
   const first = new Date(Date.UTC(year, month - 1, 1));
   const firstWeekday = first.getUTCDay();
@@ -61,7 +61,7 @@ function nthWeekday(year: number, month: number, weekday: number, n: number): nu
   return 1 + offset + (n - 1) * 7;
 }
 
-function lastWeekday(year: number, month: number, weekday: number): number {
+export function lastWeekday(year: number, month: number, weekday: number): number {
   // Find the last day of the month, then walk back to `weekday`.
   const last = new Date(Date.UTC(year, month, 0)); // day 0 of next month = last day of this month
   const lastDay = last.getUTCDate();
