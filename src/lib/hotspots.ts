@@ -16,23 +16,26 @@ export type Hotspot = {
   hours: { open: number; close: number };
 };
 
+// All addresses + hours verified against the businesses' own sites / current
+// listings (June 2026), not guessed. The `hours` window is a single open/close
+// and can't encode closed days — noted per entry where it matters (La Taqueria
+// closed Fri, Hermès closed Sun); only affects the per-hotspot "best time".
 export const HOTSPOTS: Hotspot[] = [
   {
-    id: "ginger-man",
-    name: "The Ginger Man",
-    address: "64 Greenwich Ave",
-    subLabel: "Top of the Ave, Putnam to Elm",
-    blockId: "lafayette__elm",
-    hours: { open: 11, close: 22 }, // restaurant/bar: opens 11:30am, kitchen until ~10pm
-  },
-  {
-    // TODO(philip): confirm address + hours (anchor name confirmed by you).
     id: "la-taqueria",
     name: "La Taqueria",
-    address: "48 Greenwich Ave",
+    address: "10 Greenwich Ave",
+    subLabel: "Top of the Ave, Putnam to Elm",
+    blockId: "lafayette__elm",
+    hours: { open: 11, close: 21 }, // Mon-Thu & Sat 11a-9p, Sun 11a-8p; closed Fri
+  },
+  {
+    id: "cvs",
+    name: "CVS",
+    address: "99 Greenwich Ave",
     subLabel: "Upper-mid Ave, Elm to Lewis",
     blockId: "elm__lewis",
-    hours: { open: 11, close: 22 }, // restaurant
+    hours: { open: 7, close: 23 }, // 7a-11p daily
   },
   {
     id: "saks",
@@ -40,16 +43,15 @@ export const HOTSPOTS: Hotspot[] = [
     address: "205 Greenwich Ave",
     subLabel: "Mid-Ave, Lewis to Mason",
     blockId: "lewis__mason",
-    hours: { open: 10, close: 18 }, // 10am-6pm
+    hours: { open: 11, close: 18 }, // Mon-Sat 11a-6p, Sun 12-6p
   },
   {
-    // TODO(philip): confirm address + hours (anchor name confirmed by you).
-    id: "aritzia",
-    name: "Aritzia",
-    address: "245 Greenwich Ave",
+    id: "hermes",
+    name: "Hermès",
+    address: "289 Greenwich Ave",
     subLabel: "Mid-Ave, Mason to Havemeyer",
     blockId: "mason__havemeyer",
-    hours: { open: 10, close: 19 }, // retail
+    hours: { open: 11, close: 18 }, // Mon-Sat 11a-6p; closed Sun
   },
   {
     id: "rh-gallery",
@@ -57,15 +59,15 @@ export const HOTSPOTS: Hotspot[] = [
     address: "310 Greenwich Ave",
     subLabel: "Lower-mid Ave, Havemeyer to Arch",
     blockId: "havemeyer__arch",
-    hours: { open: 10, close: 19 }, // 10am-7pm
+    hours: { open: 10, close: 18 }, // Mon-Sat 10a-6p, Sun 11a-6p
   },
   {
-    id: "apple",
-    name: "Apple",
-    address: "356 Greenwich Ave",
+    id: "eastend",
+    name: "Eastend",
+    address: "409 Greenwich Ave",
     subLabel: "Bottom of the Ave, Arch to Railroad",
     blockId: "arch__railroad",
-    hours: { open: 10, close: 20 }, // 10am-8pm
+    hours: { open: 11, close: 23 }, // opens 11:30a; to 10p Mon-Wed, midnight Thu-Sat, 9p Sun
   },
 ];
 

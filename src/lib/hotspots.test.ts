@@ -25,12 +25,12 @@ describe("HOTSPOTS", () => {
     const names = HOTSPOTS.map((h) => h.name).sort();
     expect(names).toEqual(
       [
-        "Apple",
-        "Aritzia",
+        "CVS",
+        "Eastend",
+        "Hermès",
         "La Taqueria",
         "RH Gallery",
         "Saks Fifth Avenue",
-        "The Ginger Man",
       ].sort(),
     );
   });
@@ -38,7 +38,7 @@ describe("HOTSPOTS", () => {
 
 describe("hotspotById", () => {
   it("returns the matching hotspot", () => {
-    expect(hotspotById("ginger-man")?.name).toBe("The Ginger Man");
+    expect(hotspotById("la-taqueria")?.name).toBe("La Taqueria");
   });
   it("returns null on miss", () => {
     expect(hotspotById("nope")).toBeNull();
