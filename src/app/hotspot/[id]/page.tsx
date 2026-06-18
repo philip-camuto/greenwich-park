@@ -108,9 +108,8 @@ export default async function HotspotPage({
         </div>
 
         <p className="text-[13px] leading-relaxed text-[var(--label-secondary)]">
-          This block score combines the Ave-wide model with nearby anchor
-          businesses, curb capacity, time-of-day demand, and side-street relief.
-          Phase 3 replaces these heuristics with measured demand.
+          This block starts from the Ave-wide read, then adjusts for its own
+          anchor businesses, curb capacity, and side-street relief at this hour.
         </p>
       </div>
     </main>

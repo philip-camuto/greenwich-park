@@ -191,7 +191,7 @@ export function AvenueMap({ category, perBlock, score, verdict }: Props) {
       </div>
 
       <p className="text-center text-[12px] leading-relaxed text-[var(--label-tertiary)]">
-        Block scores blend anchor demand, curb capacity, side-street relief, and time of day.
+        Greenwich Ave from the top to the train, each block colored by how tough the curb is right now.
       </p>
     </div>
   );

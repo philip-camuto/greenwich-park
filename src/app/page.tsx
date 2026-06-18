@@ -130,9 +130,9 @@ export default async function Home({
               forecastPoints={forecast.points}
             />
             <p className="mt-2 text-[12px] leading-relaxed text-[var(--label-tertiary)]">
-              Block scores combine anchor businesses, curb capacity, time of
-              day, and side-street relief. Phase 3 will replace the heuristics
-              with measured demand.
+              Each block is scored on its anchor businesses, curb capacity, and
+              how much the side streets bail you out at this hour. Higher means
+              tighter.
             </p>
           </div>
         </section>

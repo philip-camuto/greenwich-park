@@ -36,7 +36,7 @@ describe("AvenueMap", () => {
   it("renders the block model caption", () => {
     render(<AvenueMap category="green" score={20} verdict="Plenty of spots" />);
     expect(
-      screen.getByText(/Block scores blend anchor demand/),
+      screen.getByText(/each block colored by how tough the curb is/),
     ).toBeTruthy();
   });
 
