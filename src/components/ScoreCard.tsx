@@ -36,14 +36,14 @@ export function ScoreCard({
     <Card className="flex min-h-[226px] flex-col justify-between gap-5 lg:px-5 lg:py-5">
       <div className="flex items-start justify-between gap-5">
         <div>
-          <div className="mono text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--label-tertiary)]">
+          <h2 className="mono text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--label-tertiary)]">
             Demand score
             {modeledTimeLabel && (
               <span className="ml-2 text-[var(--label-secondary)]">
                 Updated {modeledTimeLabel}
               </span>
             )}
-          </div>
+          </h2>
           <div className="mt-3 flex items-end gap-1.5">
             <AnimatedNumber
               value={score}

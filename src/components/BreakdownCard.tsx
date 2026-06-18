@@ -1,6 +1,7 @@
 "use client";
 
 import { Card } from "./Card";
+import { SectionCaption } from "./SectionCaption";
 import { useScrubState } from "./DemandScrubProvider";
 import {
   breakdownViewFromForecastPoint,
@@ -53,9 +54,7 @@ export function BreakdownCard({ initialView, forecastPoints }: Props) {
 
   return (
     <div>
-      <div className="mono mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--label-tertiary)]">
-        What goes into this score
-      </div>
+      <SectionCaption>What goes into this score</SectionCaption>
       <Card className="flex flex-col gap-4 lg:px-5 lg:py-5">
         <div className="flex flex-col gap-1">
           <div className="flex items-baseline justify-between gap-3">
