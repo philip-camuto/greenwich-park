@@ -10,11 +10,30 @@ describe("parseDayParam", () => {
     const out = parseDayParam("today", new Date("2026-05-12T20:00:00Z"));
     expect(out.kind).toBe("today");
   });
-  it("returns tomorrow at 8am Greenwich-local when 'tomorrow'", () => {
+  it("anchors 'tomorrow' to the current Greenwich hour (16:00 EDT here)", () => {
+    // now = 20:00 UTC = 16:00 America/New_York, inside the active window
     const out = parseDayParam("tomorrow", new Date("2026-05-12T20:00:00Z"));
     expect(out.kind).toBe("future");
     if (out.kind === "future") {
+      expect(out.startAt.toISOString()).toBe("2026-05-13T20:00:00.000Z");
+      // implicit anchor, not a user-set time
+      expect(out.time).toBeUndefined();
+    }
+  });
+  it("clamps an early-morning 'now' up to the 8am active-window floor", () => {
+    // now = 09:00 UTC = 05:00 America/New_York → clamps to 08:00 local
+    const out = parseDayParam("tomorrow", new Date("2026-05-12T09:00:00Z"));
+    expect(out.kind).toBe("future");
+    if (out.kind === "future") {
       expect(out.startAt.toISOString()).toBe("2026-05-13T12:00:00.000Z");
+    }
+  });
+  it("clamps a late-night 'now' down to the 6pm active-window ceiling", () => {
+    // now = 02:00 UTC = 22:00 (prev day) America/New_York → clamps to 18:00 local
+    const out = parseDayParam("tomorrow", new Date("2026-05-13T02:00:00Z"));
+    expect(out.kind).toBe("future");
+    if (out.kind === "future") {
+      expect(out.startAt.toISOString()).toBe("2026-05-13T22:00:00.000Z");
     }
   });
   it("accepts a Greenwich-local time for tomorrow", () => {
@@ -41,10 +60,11 @@ describe("parseDayParam", () => {
     }
   });
   it("accepts ISO date string for future days", () => {
+    // now 16:00 local → default anchor 16:00 on the chosen date
     const out = parseDayParam("2026-05-15", new Date("2026-05-12T20:00:00Z"));
     expect(out.kind).toBe("future");
     if (out.kind === "future") {
-      expect(out.startAt.toISOString()).toBe("2026-05-15T12:00:00.000Z");
+      expect(out.startAt.toISOString()).toBe("2026-05-15T20:00:00.000Z");
     }
   });
   it("accepts past dates → future (caller treats as historical-style preview)", () => {

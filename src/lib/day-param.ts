@@ -22,8 +22,33 @@ function greenwichLocalYMD(at: Date): string {
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
-function eightAmGreenwichOnDate(isoDate: string): Date {
-  return greenwichLocalTimeOnDate(isoDate, "08:00");
+// Active-hours window for the *default* anchor when a future day is picked
+// with no explicit time. Switching days asks "what's it like at the time I'd
+// actually go", so we anchor to the current Greenwich hour rather than a flat
+// 8am — but clamp into retail/enforcement hours so a 2am or 11pm "now" doesn't
+// headline that day with a dead overnight slot or run the 12h window past
+// midnight.
+const ACTIVE_HOUR_START = 8;
+const ACTIVE_HOUR_END = 18;
+
+function greenwichLocalHour(at: Date): number {
+  const hour = new Intl.DateTimeFormat("en-US", {
+    timeZone: GREENWICH_TZ,
+    hour: "2-digit",
+    hour12: false,
+  })
+    .formatToParts(at)
+    .find((p) => p.type === "hour")?.value;
+  const n = parseInt(hour ?? "8", 10);
+  return n === 24 ? 0 : n;
+}
+
+function defaultAnchorTime(now: Date): string {
+  const clamped = Math.min(
+    ACTIVE_HOUR_END,
+    Math.max(ACTIVE_HOUR_START, greenwichLocalHour(now)),
+  );
+  return `${String(clamped).padStart(2, "0")}:00`;
 }
 
 function greenwichLocalTimeOnDate(isoDate: string, time: string): Date {
@@ -91,7 +116,7 @@ export function parseDayParam(
 
   const startAt = requestedTime
     ? greenwichLocalTimeOnDate(isoDate, requestedTime)
-    : eightAmGreenwichOnDate(isoDate);
+    : greenwichLocalTimeOnDate(isoDate, defaultAnchorTime(now));
   if (isoDate === todayISO && startAt.getTime() <= now.getTime()) {
     return { kind: "today" };
   }
