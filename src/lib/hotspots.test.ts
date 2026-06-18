@@ -3,8 +3,13 @@ import { HOTSPOTS, hotspotById } from "./hotspots";
 import { BLOCKS } from "@/components/avenue-map-data";
 
 describe("HOTSPOTS", () => {
-  it("has 4 entries", () => {
-    expect(HOTSPOTS).toHaveLength(4);
+  it("has one entry per avenue block (6)", () => {
+    expect(HOTSPOTS).toHaveLength(6);
+  });
+  it("covers every avenue block exactly once", () => {
+    const blockIds = HOTSPOTS.map((h) => h.blockId);
+    expect(new Set(blockIds).size).toBe(BLOCKS.length);
+    expect(blockIds).toHaveLength(BLOCKS.length);
   });
   it("each has a unique id", () => {
     const ids = HOTSPOTS.map((h) => h.id);
@@ -16,10 +21,17 @@ describe("HOTSPOTS", () => {
       expect(blockIds.has(h.blockId)).toBe(true);
     }
   });
-  it("includes the four expected names", () => {
+  it("includes the six expected names", () => {
     const names = HOTSPOTS.map((h) => h.name).sort();
     expect(names).toEqual(
-      ["Apple", "RH Gallery", "Saks Fifth Avenue", "The Ginger Man"].sort(),
+      [
+        "Apple",
+        "Aritzia",
+        "La Taqueria",
+        "RH Gallery",
+        "Saks Fifth Avenue",
+        "The Ginger Man",
+      ].sort(),
     );
   });
 });

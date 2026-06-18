@@ -7,10 +7,10 @@ import { HOTSPOTS } from "@/lib/hotspots";
 describe("HotspotList", () => {
   const perBlock = perBlockScores(60);
 
-  it("renders all 4 hotspots as links", () => {
+  it("renders every hotspot as a link", () => {
     render(<HotspotList perBlock={perBlock} />);
     const links = screen.getAllByRole("link");
-    expect(links).toHaveLength(4);
+    expect(links).toHaveLength(HOTSPOTS.length);
   });
 
   it("each link goes to /hotspot/<id>", () => {

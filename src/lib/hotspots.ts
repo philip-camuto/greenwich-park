@@ -1,6 +1,8 @@
-// Four hand-picked landmarks on Greenwich Ave. Each maps to a block id from
-// `avenue-map-data.ts`. Phase 1: per-hotspot score = its block's per-block
-// score (which itself is global score + block.offset).
+// One landmark per Greenwich Ave block, ordered top (Putnam) to bottom
+// (Railroad) so the list reads down the avenue in the same order as the map.
+// Each maps to a block id from `avenue-map-data.ts`. Phase 1: per-hotspot
+// score = its block's per-block score (which itself is global score +
+// block.offset).
 
 export type Hotspot = {
   id: string;
@@ -24,12 +26,30 @@ export const HOTSPOTS: Hotspot[] = [
     hours: { open: 11, close: 22 }, // restaurant/bar: opens 11:30am, kitchen until ~10pm
   },
   {
+    // TODO(philip): confirm address + hours (anchor name confirmed by you).
+    id: "la-taqueria",
+    name: "La Taqueria",
+    address: "48 Greenwich Ave",
+    subLabel: "Upper-mid Ave, Elm to Lewis",
+    blockId: "elm__lewis",
+    hours: { open: 11, close: 22 }, // restaurant
+  },
+  {
     id: "saks",
     name: "Saks Fifth Avenue",
     address: "205 Greenwich Ave",
     subLabel: "Mid-Ave, Lewis to Mason",
     blockId: "lewis__mason",
     hours: { open: 10, close: 18 }, // 10am-6pm
+  },
+  {
+    // TODO(philip): confirm address + hours (anchor name confirmed by you).
+    id: "aritzia",
+    name: "Aritzia",
+    address: "245 Greenwich Ave",
+    subLabel: "Mid-Ave, Mason to Havemeyer",
+    blockId: "mason__havemeyer",
+    hours: { open: 10, close: 19 }, // retail
   },
   {
     id: "rh-gallery",
