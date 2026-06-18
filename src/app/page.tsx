@@ -97,7 +97,7 @@ export default async function Home({
   return (
     <DemandScrubProvider key={scrubResetKey}>
     <main className="min-h-dvh bg-[var(--bg-group)]">
-      <div className="mx-auto flex w-full max-w-[1480px] flex-col gap-4 px-4 pb-8 pt-4 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-6 lg:px-8 lg:pb-10 xl:gap-8 xl:px-12">
+      <div className="mx-auto flex w-full max-w-[1480px] flex-col gap-4 px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 lg:grid lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-6 lg:px-8 lg:pb-10 xl:gap-8 xl:px-12">
         <header className="flex flex-col gap-3 border-b border-[var(--separator)] pb-4 lg:col-span-2 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="mono mb-1 text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--label-tertiary)]">

@@ -65,8 +65,8 @@ export function AvenueMap({ category, perBlock, score, verdict }: Props) {
                 width={40}
                 height={yS - yN}
                 fill={isActive ? "var(--hover-fill)" : "transparent"}
-                stroke={isActive ? "var(--label-secondary)" : "transparent"}
-                strokeWidth={2}
+                stroke={isActive ? "var(--label-primary)" : "transparent"}
+                strokeWidth={2.5}
                 role="button"
                 tabIndex={0}
                 aria-label={`${b.label}, demand ${block?.score ?? score} of 100`}
@@ -177,13 +177,13 @@ export function AvenueMap({ category, perBlock, score, verdict }: Props) {
         </g>
       </svg>
 
-      {/* Tooltip / readout. Reserves 2 lines of height + clamps to 2 max so
-          that swapping between the empty hint and the longest hover string
-          doesn't reflow the description below or the BreakdownCard further
-          down the aside. */}
+      {/* Tooltip / readout. Reserves ~3 lines of height so swapping between
+          the empty hint and a hover string keeps reflow of the description
+          and BreakdownCard below to a minimum. Full text shown (no clamp) so
+          the whole block readout is legible on a tap. */}
       <div
         aria-live="polite"
-        className="mono line-clamp-2 min-h-[2.4em] text-center text-[10px] font-medium uppercase tracking-[0.12em] text-[var(--label-secondary)]"
+        className="mono min-h-[3.4em] text-center text-[11px] font-medium uppercase leading-snug tracking-[0.08em] text-[var(--label-secondary)]"
       >
         {activeBlockId
           ? readoutFor(activeBlockId, verdict, score, perBlock)
