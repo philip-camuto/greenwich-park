@@ -108,8 +108,9 @@ export default async function HotspotPage({
         </div>
 
         <p className="text-[13px] leading-relaxed text-[var(--label-secondary)]">
-          This block starts from the Ave-wide read, then adjusts for its own
-          anchor businesses, curb capacity, and side-street relief at this hour.
+          This block starts from the Ave-wide GLM demand surface, then
+          re-weights for its own anchor businesses, metered curb capacity, and
+          side-street relief at the current hour.
         </p>
       </div>
     </main>

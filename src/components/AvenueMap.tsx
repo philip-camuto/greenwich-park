@@ -191,7 +191,7 @@ export function AvenueMap({ category, perBlock, score, verdict }: Props) {
       </div>
 
       <p className="text-center text-[12px] leading-relaxed text-[var(--label-tertiary)]">
-        Greenwich Ave from the top to the train, each block colored by how tough the curb is right now.
+        The trained demand surface scored block by block down Greenwich Ave, top of the Ave to the train.
       </p>
     </div>
   );
