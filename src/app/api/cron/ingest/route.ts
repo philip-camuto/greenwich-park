@@ -34,8 +34,21 @@ async function handle(request: Request) {
   }
   try {
     const obs = await runIngest();
+    // Derive an alert-able signal from the persisted ok-flags so a degraded
+    // run is visible in the cron response body (not just server logs). The
+    // five live sources each have an ok column; a null/false on any means
+    // that feed was dark for this observation. Special events carry no flag.
+    const failedSources = [
+      !obs.weatherOk && "weather",
+      !obs.trafficOk && "traffic",
+      !obs.trafficTomTomOk && "tomTom",
+      !obs.mtaOk && "metroNorth",
+      !obs.mnrAlertsOk && "metroNorthAlerts",
+    ].filter((s): s is string => typeof s === "string");
     return NextResponse.json({
       ok: true,
+      degraded: failedSources.length > 0,
+      failedSources,
       observation: {
         id: obs.id,
         observedAt: obs.observedAt,

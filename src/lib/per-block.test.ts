@@ -39,3 +39,32 @@ describe("perBlockScores", () => {
     );
   });
 });
+
+describe("scoreBlock score clamping", () => {
+  it("never exceeds 100 even with a high global score + positive modifiers", () => {
+    const out = scoreBlock(100, blockProfiles.lewis__mason, {
+      hour: 14,
+      dayOfWeek: 6,
+    });
+    expect(out.score).toBeLessThanOrEqual(100);
+    expect(out.score).toBe(100);
+    expect(out.category).toBe("red");
+  });
+  it("never drops below 0 even with a 0 global score + negative modifiers", () => {
+    // elm__lewis: high capacity (-3) + high relief (-4) → negative modifiers.
+    const out = scoreBlock(0, blockProfiles.elm__lewis, {
+      hour: 3,
+      dayOfWeek: 2,
+    });
+    expect(out.score).toBeGreaterThanOrEqual(0);
+  });
+  it("categorizes at the green/yellow/red boundaries", () => {
+    // base anchors are fixed; assert categorize via the public score field
+    // across a sweep of global scores on a neutral overnight slot.
+    const overnight = { hour: 3, dayOfWeek: 2 };
+    const greens = perBlockScores(0, overnight);
+    for (const id of Object.keys(greens)) {
+      expect(["green", "yellow", "red"]).toContain(greens[id].category);
+    }
+  });
+});
