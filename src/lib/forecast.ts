@@ -13,6 +13,7 @@ import {
   type HourlyForecastPoint,
 } from "@/lib/sources/openWeather";
 import { fetchGreenwichTraffic } from "@/lib/sources/ctTravelSmart";
+import { fetchTomTomFlow } from "@/lib/sources/tomTom";
 import {
   fetchMetroNorthRidership,
   metroNorthCurrentInput,
@@ -293,9 +294,10 @@ export function buildForecast({
 export async function buildForecastForGreenwich(
   startAt: Date = new Date(),
 ): Promise<Forecast> {
-  const [traffic, hourly, mtaData, metroNorthAlerts, aggregatedEvents] =
+  const [traffic, tomTom, hourly, mtaData, metroNorthAlerts, aggregatedEvents] =
     await Promise.all([
       fetchGreenwichTraffic(),
+      fetchTomTomFlow(),
       fetchGreenwichHourlyForecast(),
       fetchMetroNorthRidership(),
       fetchMetroNorthAlerts(),
@@ -327,9 +329,21 @@ export async function buildForecastForGreenwich(
   // 0 (display only). speedRatio 1.0 anchors the projection to a neutral
   // free-flow start rather than carrying today's live congestion forward.
   const isFuture = startAt.getTime() - Date.now() > 60 * 60 * 1000;
+  // For "today", merge the live TomTom flow into the CT Travel Smart snapshot so
+  // slot 0 (now) carries a real speedRatio — without this the NOW slot shows
+  // "No data" while every projected slot synthesises one (see projectTraffic).
+  // Mirrors the merge in runIngest(). A future day has no "now" to anchor, so we
+  // keep the synthetic free-flow start.
   const trafficForDay: TrafficSnapshot = isFuture
     ? { ...traffic, ok: false, tomTomOk: false, projected: true, speedRatio: 1.0 }
-    : traffic;
+    : {
+        ...traffic,
+        currentSpeedMph: tomTom.currentSpeedMph,
+        freeFlowSpeedMph: tomTom.freeFlowSpeedMph,
+        speedRatio: tomTom.speedRatio,
+        tomTomOk: tomTom.ok,
+        closureNearby: traffic.closureNearby || tomTom.roadClosure,
+      };
   // On the today strip, slot 0 should reflect the live ridership anomaly (same
   // as the main panel). On a future-day view there is no "now" to anchor.
   const metroNorthNow = isFuture ? null : metroNorthCurrentInput(mtaData);
