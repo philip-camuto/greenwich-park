@@ -12,6 +12,7 @@ import {
 } from "@/lib/forecast";
 import { hotspotById } from "@/lib/hotspots";
 import { getObservationForDisplay } from "@/lib/ingest";
+import { blockSupply } from "@/lib/inventory/block-supply";
 import { perBlockScores, scoreBlock, blockProfiles } from "@/lib/per-block";
 
 export const dynamic = "force-dynamic";
@@ -60,6 +61,7 @@ export default async function HotspotPage({
     dayOfWeek: observation.dayOfWeek,
   });
   const block = blockScores[hotspot.blockId];
+  const supply = blockSupply(hotspot.blockId);
   const blockForecast = forecastForBlock(
     forecast,
     hotspot.blockId,
@@ -112,6 +114,16 @@ export default async function HotspotPage({
           re-weights for its own anchor businesses, metered curb capacity, and
           side-street relief at the current hour.
         </p>
+
+        {supply && (
+          <p className="mono text-[11px] leading-relaxed text-[var(--label-tertiary)]">
+            OSM-measured supply: about {supply.onStreetSpaces} on-street spaces
+            {supply.publicSpacesWithin5min > 0 &&
+              `, ${supply.publicSpacesWithin5min} public lot spaces within a 5-min walk`}
+            {supply.nearestLotWalkMeters != null &&
+              ` (nearest ${supply.nearestLotWalkMeters} m)`}
+          </p>
+        )}
       </div>
     </main>
   );

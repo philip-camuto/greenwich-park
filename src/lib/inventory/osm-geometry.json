@@ -1,0 +1,65 @@
+{
+  "_meta": {
+    "source": "OpenStreetMap via OSMnx",
+    "generator": "analysis/osm_geometry.py",
+    "metersPerSpace": 6.5,
+    "sides": 2,
+    "parkableFraction": 0.8,
+    "publicHintAreaM2": 1800.0,
+    "publicHintDistM": 100.0,
+    "publicLots": 11,
+    "m2PerStall": 30.0,
+    "catchmentWalkMPerMin": 80,
+    "note": "Offline-derived. onStreetSpaces = sides * segment length * parkableFraction / metersPerSpace (both curb sides, minus unparkable). Relief = walk-network distance + reachable public spaces (catchment) from the block anchor to PUBLIC-candidate lots (not any parking polygon). OSM defines geometry only; public split is a size+proximity heuristic."
+  },
+  "blocks": [
+    {
+      "blockId": "lafayette__elm",
+      "segmentMeters": 116.7,
+      "onStreetSpaces": 29,
+      "nearestLotWalkMeters": 120,
+      "publicSpacesWithin2min": 91,
+      "publicSpacesWithin5min": 457
+    },
+    {
+      "blockId": "elm__lewis",
+      "segmentMeters": 179.0,
+      "onStreetSpaces": 44,
+      "nearestLotWalkMeters": 166,
+      "publicSpacesWithin2min": 0,
+      "publicSpacesWithin5min": 380
+    },
+    {
+      "blockId": "lewis__mason",
+      "segmentMeters": 213.8,
+      "onStreetSpaces": 53,
+      "nearestLotWalkMeters": 19,
+      "publicSpacesWithin2min": 322,
+      "publicSpacesWithin5min": 769
+    },
+    {
+      "blockId": "mason__havemeyer",
+      "segmentMeters": 189.5,
+      "onStreetSpaces": 47,
+      "nearestLotWalkMeters": 133,
+      "publicSpacesWithin2min": 150,
+      "publicSpacesWithin5min": 827
+    },
+    {
+      "blockId": "havemeyer__arch",
+      "segmentMeters": 142.3,
+      "onStreetSpaces": 35,
+      "nearestLotWalkMeters": 18,
+      "publicSpacesWithin2min": 83,
+      "publicSpacesWithin5min": 479
+    },
+    {
+      "blockId": "arch__railroad",
+      "segmentMeters": 62.7,
+      "onStreetSpaces": 15,
+      "nearestLotWalkMeters": 21,
+      "publicSpacesWithin2min": 173,
+      "publicSpacesWithin5min": 246
+    }
+  ]
+}
