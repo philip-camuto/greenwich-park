@@ -140,7 +140,7 @@ export default async function Home({
         <aside className="flex flex-col gap-5 lg:sticky lg:top-8 lg:self-start">
           <div>
             <SectionCaption>Greenwich Avenue</SectionCaption>
-            <Card className="min-h-[520px] lg:px-5 lg:py-5">
+            <Card className="flex min-h-[560px] flex-col lg:min-h-[640px] lg:px-5 lg:py-5">
               <BlockMap
                 category={category}
                 initialScore={globalScore}

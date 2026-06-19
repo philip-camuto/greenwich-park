@@ -35,7 +35,7 @@ export function AvenueMap({ category, perBlock, score, verdict }: Props) {
   const [activeBlockId, setActiveBlockId] = useState<string | null>(null);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex h-full flex-col justify-center gap-4">
       <svg
         viewBox={`0 0 ${W} ${H}`}
         className="mx-auto block h-auto w-full max-w-[320px] lg:max-w-[360px]"
@@ -183,7 +183,7 @@ export function AvenueMap({ category, perBlock, score, verdict }: Props) {
           the whole block readout is legible on a tap. */}
       <div
         aria-live="polite"
-        className="mono min-h-[3.4em] text-center text-[11px] font-medium uppercase leading-snug tracking-[0.08em] text-[var(--label-secondary)]"
+        className="mono flex min-h-[3.4em] items-center justify-center text-center text-[11px] font-medium uppercase leading-snug tracking-[0.08em] text-[var(--label-secondary)]"
       >
         {activeBlockId
           ? readoutFor(activeBlockId, verdict, score, perBlock)
